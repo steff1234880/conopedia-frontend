@@ -23,6 +23,9 @@ import heroBooks from '../assets/dashboard-hero-books.png';
 import course1Img from '../assets/course-1.png';
 import course2Img from '../assets/course-2.png';
 import course3Img from '../assets/course-3.png';
+import tutorial1Img from '../assets/tutorial-1.png';
+import tutorial2Img from '../assets/tutorial-2.png';
+import tutorial3Img from '../assets/tutorial-3.png';
 import userAvatar from '../assets/user-avatar.png';
 
 /**
@@ -729,11 +732,9 @@ export default function StudentDashboard({
               <div className="space-y-2.5">
                 
                 {/* Video 1 */}
-                <div className="rounded-2xl bg-white border border-[#edf2f7] p-3 flex items-center gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer">
-                  <div className="relative w-16 h-11 rounded-lg bg-[#1e293b] flex items-center justify-center shrink-0 overflow-hidden">
-                    <div className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[#006ee6]">
-                      <Play className="w-3 h-3 fill-current ml-0.5" />
-                    </div>
+                <div className="rounded-2xl bg-white border border-[#edf2f7] p-2.5 sm:p-3 flex items-center gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer">
+                  <div className="relative w-15 sm:w-16 h-11 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                    <img src={tutorial1Img} alt="Pharmacology" className="w-full h-full object-cover" />
                   </div>
                   <div className="space-y-0.5">
                     <span className="text-[9.5px] font-extrabold text-[#006ee6] uppercase tracking-wider block">
@@ -749,11 +750,9 @@ export default function StudentDashboard({
                 </div>
 
                 {/* Video 2 */}
-                <div className="rounded-2xl bg-white border border-[#edf2f7] p-3 flex items-center gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer">
-                  <div className="relative w-16 h-11 rounded-lg bg-[#0f172a] flex items-center justify-center shrink-0 overflow-hidden">
-                    <div className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[#006ee6]">
-                      <Play className="w-3 h-3 fill-current ml-0.5" />
-                    </div>
+                <div className="rounded-2xl bg-white border border-[#edf2f7] p-2.5 sm:p-3 flex items-center gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer">
+                  <div className="relative w-15 sm:w-16 h-11 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                    <img src={tutorial2Img} alt="Cardiology" className="w-full h-full object-cover" />
                   </div>
                   <div className="space-y-0.5">
                     <span className="text-[9.5px] font-extrabold text-[#006ee6] uppercase tracking-wider block">
@@ -769,11 +768,9 @@ export default function StudentDashboard({
                 </div>
 
                 {/* Video 3 */}
-                <div className="rounded-2xl bg-white border border-[#edf2f7] p-3 flex items-center gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer">
-                  <div className="relative w-16 h-11 rounded-lg bg-[#334155] flex items-center justify-center shrink-0 overflow-hidden">
-                    <div className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[#006ee6]">
-                      <Play className="w-3 h-3 fill-current ml-0.5" />
-                    </div>
+                <div className="rounded-2xl bg-white border border-[#edf2f7] p-2.5 sm:p-3 flex items-center gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer">
+                  <div className="relative w-15 sm:w-16 h-11 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                    <img src={tutorial3Img} alt="Pediatrics" className="w-full h-full object-cover" />
                   </div>
                   <div className="space-y-0.5">
                     <span className="text-[9.5px] font-extrabold text-[#006ee6] uppercase tracking-wider block">
