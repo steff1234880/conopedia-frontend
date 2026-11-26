@@ -209,9 +209,10 @@ export default function StudentDashboard({
       {/* 
         ========================================================================
         MAIN DASHBOARD CONTAINER
+        Expanded to approximately 90-94% of screen width with balanced side margins
         ========================================================================
       */}
-      <main className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <main className="w-[92%] max-w-[1560px] mx-auto px-2 sm:px-4 lg:px-6 pt-6 space-y-6">
         
         {/* Top Badges & Welcome Greeting Row */}
         <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
