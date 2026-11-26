@@ -273,36 +273,36 @@ export default function StudentDashboard({
           HERO BANNER: "Your first chapter awaits"
           ========================================================================
         */}
-        <section className="relative w-full rounded-2xl bg-gradient-to-r from-[#e7f3fe] via-[#edf6ff] to-[#f4f9ff] border border-[#d6e8fc] p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between overflow-hidden">
+        <section className="relative w-full rounded-2xl bg-gradient-to-r from-[#e7f3fe] via-[#edf6ff] to-[#f4f9ff] border border-[#d6e8fc] px-6 py-5 sm:px-8 sm:py-6 flex flex-col sm:flex-row items-center justify-between overflow-hidden">
           {/* Subtle background ambient glow */}
           <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
 
           {/* Left Text & CTA */}
-          <div className="z-10 max-w-lg space-y-3 text-left">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.8 rounded-full bg-white/80 border border-[#d0e4fa] text-[#006ee6] text-[10.5px] font-bold tracking-tight">
+          <div className="z-10 max-w-lg space-y-2.5 text-left">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/80 border border-[#d0e4fa] text-[#006ee6] text-[10.5px] font-bold tracking-tight">
               <GraduationCap className="w-3.5 h-3.5 text-[#006ee6]" />
               ADAPTIVE NEXT-GEN NCLEX (NGN)
             </span>
 
-            <h2 className="text-xl sm:text-2xl font-bold text-[#0f172a] tracking-tight">
+            <h2 className="text-xl sm:text-[22px] font-bold text-[#0f172a] tracking-tight leading-tight">
               Your first chapter awaits
             </h2>
 
-            <p className="text-xs sm:text-[13px] text-[#475569]">
+            <p className="text-xs text-[#64748b]">
               Choose a course and set a study goal.
             </p>
 
-            <div className="pt-2 flex flex-wrap items-center gap-3">
+            <div className="pt-1.5 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={onNavigateCourses}
-                className="px-5 py-2.5 rounded-full bg-[#006ee6] hover:bg-[#0060cb] text-white text-[13px] font-semibold flex items-center gap-2 transition shadow-xs hover:shadow cursor-pointer"
+                className="px-5 py-2 rounded-full bg-[#006ee6] hover:bg-[#0060cb] text-white text-[13px] font-semibold flex items-center gap-2 transition shadow-xs hover:shadow cursor-pointer"
               >
                 <span>Explore courses</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center gap-1.5 text-xs text-[#475569] font-medium">
+              <div className="flex items-center gap-1.5 text-xs text-[#64748b] font-medium">
                 <Check className="w-4 h-4 text-[#006ee6]" />
                 <span>Updated for 2025 NCSBN test plan</span>
               </div>
@@ -310,11 +310,11 @@ export default function StudentDashboard({
           </div>
 
           {/* Right 3D Books & Stethoscope Graphic */}
-          <div className="z-10 mt-6 sm:mt-0 flex items-center justify-center">
+          <div className="z-10 mt-4 sm:mt-0 flex items-center justify-center shrink-0">
             <img
               src={heroBooks}
               alt="Medical books with stethoscope"
-              className="w-36 sm:w-44 h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,110,230,0.12)] pointer-events-none"
+              className="w-32 sm:w-36 h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,110,230,0.12)] pointer-events-none"
             />
           </div>
         </section>
