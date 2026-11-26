@@ -160,19 +160,6 @@ export default function StudentDashboard({
               </div>
               <span className="text-[10px] text-[#64748b] font-medium">NCLEX-RN Prep</span>
             </div>
-            {onLogout && (
-              <button 
-                type="button" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLogout();
-                }}
-                className="hidden lg:block text-[11px] text-[#94a3b8] hover:text-[#ef4444] px-1 cursor-pointer"
-                title="Logout"
-              >
-                Exit
-              </button>
-            )}
           </div>
 
           {/* Mobile Menu Toggle Button */}
