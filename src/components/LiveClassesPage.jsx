@@ -165,7 +165,7 @@ export default function LiveClassesPage({ onNavigateHome, onNavigateCourses, onN
         TOP NAVIGATION BAR
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-14 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <div className="flex items-center cursor-pointer" onClick={onNavigateHome}>
             <img
@@ -269,7 +269,7 @@ export default function LiveClassesPage({ onNavigateHome, onNavigateCourses, onN
         MAIN CONTENT CONTAINER
         ========================================================================
       */}
-      <main className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <main className="w-[92%] max-w-[1560px] mx-auto px-2 sm:px-4 lg:px-6 pt-6 space-y-6">
         
         {/* Header & Tabs Row */}
         <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">

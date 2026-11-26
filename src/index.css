@@ -12,3 +12,20 @@
     overflow-x: hidden;
   }
 }
+
+@layer utilities {
+  /* Global platform container enforcing 92% width on desktop to prevent excessive side gaps */
+  .platform-container {
+    width: 92%;
+    max-width: 1560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .platform-header {
+    width: 92%;
+    max-width: 1560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

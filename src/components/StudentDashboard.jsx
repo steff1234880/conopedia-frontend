@@ -77,7 +77,7 @@ export default function StudentDashboard({
         TOP NAVIGATION BAR
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-14 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           {/* Canopedia Brand Logo */}
           <div className="flex items-center cursor-pointer" onClick={() => setActiveTab('Home')}>

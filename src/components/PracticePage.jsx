@@ -98,7 +98,7 @@ export default function PracticePage({
         TOP NAVIGATION BAR
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-14 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <div className="flex items-center cursor-pointer" onClick={onNavigateHome}>
             <img
@@ -203,7 +203,7 @@ export default function PracticePage({
         MAIN PRACTICE CONTAINER
         ========================================================================
       */}
-      <main className="max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 pt-7 space-y-7">
+      <main className="w-[92%] max-w-[1560px] mx-auto px-2 sm:px-4 lg:px-6 pt-7 space-y-7">
         
         {/* Page Heading & Subtitle */}
         <section className="text-left space-y-1">
