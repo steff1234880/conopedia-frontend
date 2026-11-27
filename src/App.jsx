@@ -355,6 +355,7 @@ export default function App() {
           onNavigateHome={() => navigateTo('dashboard')}
           onNavigatePractice={() => navigateTo('practice')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onNavigateProfile={() => navigateTo('profile')}
           onStartAssessment={handleOpenExamIntroduction}
           onLogout={() => {
             demoAuthService.logout();
@@ -369,6 +370,7 @@ export default function App() {
           onNavigateHome={() => navigateTo('dashboard')}
           onNavigateCourses={() => navigateTo('courses')}
           onNavigatePractice={() => navigateTo('practice')}
+          onNavigateProfile={() => navigateTo('profile')}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -383,6 +385,7 @@ export default function App() {
           onNavigateCourses={() => navigateTo('courses')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onNavigateReadiness={() => navigateTo('readiness-assessments')}
+          onNavigateProfile={() => navigateTo('profile')}
           onStartAssessment={handleOpenExamIntroduction}
           onViewResults={() => navigateTo('assessment-results')}
           onLogout={() => {
@@ -399,6 +402,7 @@ export default function App() {
           onNavigateCourses={() => navigateTo('courses')}
           onNavigatePractice={() => navigateTo('practice')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onNavigateProfile={() => navigateTo('profile')}
           onStartAssessment={handleOpenExamIntroduction}
           onViewResults={() => navigateTo('assessment-results')}
           onLogout={() => {

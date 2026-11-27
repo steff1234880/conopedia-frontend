@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import canopediaWordmark from '../assets/canopedia-wordmark.png';
 import userAvatar from '../assets/user-avatar.png';
+import { MobileTopHeader, MobileBottomNav } from './MobileNavigation';
 import {
   getLatestAssessmentResult,
   getQuestionReviewDetails,
@@ -105,13 +106,16 @@ export default function AssessmentResultsPage({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] text-[#1e2733] font-sans selection:bg-[#006ee6] selection:text-white pb-20">
+    <div className="min-h-screen w-full bg-[#f5f8fb] md:bg-[#f8fafc] text-[#1e2733] font-sans selection:bg-[#006ee6] selection:text-white pb-28 md:pb-20">
+      {/* Compact Mobile Top Header (< md) */}
+      <MobileTopHeader onNavigateHome={onNavigateHome} onNavigateProfile={onNavigateProfile} />
+
       {/* 
         ========================================================================
-        TOP NAVIGATION BAR
+        TOP NAVIGATION BAR (Desktop >= md)
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
+      <header className="hidden md:flex sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 items-center justify-between">
         <div className="flex items-center gap-8">
           <div className="flex items-center cursor-pointer" onClick={onNavigateHome}>
             <img
@@ -203,40 +207,8 @@ export default function AssessmentResultsPage({
               <span className="text-[10px] text-[#64748b] font-medium">NCLEX-RN Prep</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-[#475569] hover:bg-[#f1f5f9]"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
       </header>
-
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#e2e8f0] px-4 py-3 space-y-1">
-          {navLinks.map((link) => (
-            <button
-              key={link}
-              type="button"
-              onClick={() => {
-                if (link === 'Home' && onNavigateHome) onNavigateHome();
-                if (link === 'Learn' && onNavigateCourses) onNavigateCourses();
-                if (link === 'Practice' && onNavigatePractice) onNavigatePractice();
-                if (link === 'Live Classes' && onNavigateLiveClasses) onNavigateLiveClasses();
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                link === 'Home' ? 'bg-[#006ee6] text-white' : 'text-[#475569] hover:bg-[#f1f5f9]'
-              }`}
-            >
-              {link}
-            </button>
-          ))}
-        </div>
-      )}
 
       {viewMode === 'review' ? (
         /* 
@@ -245,7 +217,7 @@ export default function AssessmentResultsPage({
           Opened when clicking "Review answers ->"
           ========================================================================
         */
-        <main className="w-[92%] max-w-[920px] mx-auto pt-7 space-y-5">
+        <main className="w-full px-5 md:px-0 md:w-[92%] max-w-[920px] mx-auto pt-4 md:pt-7 space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <button
               type="button"
@@ -405,7 +377,7 @@ export default function AssessmentResultsPage({
           MAIN FINAL RESULTS SUMMARY VIEW (Matches Reference Screenshot)
           ========================================================================
         */
-        <main className="w-[92%] max-w-[780px] mx-auto pt-8 sm:pt-10 space-y-7">
+        <main className="w-full px-5 md:px-0 md:w-[92%] max-w-[780px] mx-auto pt-4 md:pt-10 space-y-6 md:space-y-7">
           {/* Top Completion Pill + Success Checkmark + Heading */}
           <section className="flex flex-col items-center text-center">
             {/* Pill: RECOGNITION PRACTICE • Oct 5, 2026 · 9:49 AM */}
@@ -687,6 +659,15 @@ export default function AssessmentResultsPage({
           </div>
         </div>
       )}
+
+      {/* Fixed Mobile Bottom Navigation (< md) */}
+      <MobileBottomNav
+        activeTab="Practice"
+        onNavigateHome={onNavigateHome}
+        onNavigateLearn={onNavigateCourses}
+        onNavigatePractice={onNavigatePractice}
+        onNavigateLive={onNavigateLiveClasses}
+      />
     </div>
   );
 }

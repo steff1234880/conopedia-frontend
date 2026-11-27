@@ -14,7 +14,8 @@ import {
   Star, 
   Menu, 
   X,
-  GraduationCap
+  GraduationCap,
+  BookOpen
 } from 'lucide-react';
 import canopediaWordmark from '../assets/canopedia-wordmark.png';
 import userAvatar from '../assets/user-avatar.png';
@@ -22,11 +23,14 @@ import courseCard1 from '../assets/course-card-1.png';
 import courseCard2 from '../assets/course-card-2.png';
 import courseCard3 from '../assets/course-card-3.png';
 import courseCard4 from '../assets/course-card-4.png';
+import mobileStudyPlanHero from '../assets/mobile-study-plan-hero.png';
+import { MobileTopHeader, MobileBottomNav } from './MobileNavigation';
 
 export default function CoursesPage({
   onNavigateHome,
   onNavigatePractice,
   onNavigateLiveClasses,
+  onNavigateProfile,
   onStartAssessment,
   onLogout,
 }) {
@@ -36,6 +40,7 @@ export default function CoursesPage({
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [mobileShowCatalog, setMobileShowCatalog] = useState(false);
 
   const navLinks = ['Home', 'Learn', 'Practice', 'Live Classes', 'Study Schedule'];
 
@@ -119,14 +124,19 @@ export default function CoursesPage({
   });
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] text-[#1e2733] font-sans selection:bg-[#006ee6] selection:text-white pb-20">
-      
+    <div className="min-h-screen w-full bg-[#f5f8fb] md:bg-[#f8fafc] text-[#1e2733] font-sans selection:bg-[#006ee6] selection:text-white pb-28 md:pb-20">
+      {/* Compact Mobile Header (< md) */}
+      <MobileTopHeader
+        onNavigateHome={onNavigateHome}
+        onNavigateProfile={onNavigateProfile}
+      />
+
       {/* 
         ========================================================================
-        TOP NAVIGATION BAR (Exact match to Dashboard)
+        DESKTOP & TABLET TOP NAVIGATION BAR (md: and above)
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
+      <header className="hidden md:flex sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 items-center justify-between">
         <div className="flex items-center gap-8">
           <div className="flex items-center cursor-pointer" onClick={onNavigateHome}>
             <img
@@ -175,7 +185,10 @@ export default function CoursesPage({
             </button>
           </div>
 
-          <div className="flex items-center gap-2 pl-1 pr-1.5 py-1 rounded-full bg-[#f8fafc] border border-[#eef2f6]">
+          <div
+            onClick={onNavigateProfile}
+            className="flex items-center gap-2 pl-1 pr-1.5 py-1 rounded-full bg-[#f8fafc] border border-[#eef2f6] cursor-pointer hover:bg-[#f1f5f9] transition"
+          >
             <img
               src={userAvatar}
               alt="Ananya"
@@ -191,44 +204,72 @@ export default function CoursesPage({
               <span className="text-[10px] text-[#64748b] font-medium">NCLEX-RN Prep</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-[#475569] hover:bg-[#f1f5f9]"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
       </header>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#e2e8f0] px-4 py-3 space-y-1">
-          {navLinks.map((link) => (
+      {/* 
+        ========================================================================
+        MOBILE LEARN STUDY PLAN ONBOARDING VIEW (< md, Matches Figma Reference)
+        ========================================================================
+      */}
+      {!mobileShowCatalog && (
+        <main className="md:hidden w-full max-w-[430px] mx-auto px-5 pt-2 pb-6 space-y-5">
+          {/* Weekly Study Illustration Card */}
+          <div className="w-full rounded-[28px] overflow-hidden shadow-[0_4px_20px_rgba(15,23,42,0.05)] bg-[#d6e7f2]">
+            <img
+              src={mobileStudyPlanHero}
+              alt="Weekly study schedule illustration"
+              className="w-full h-auto object-cover block pointer-events-none select-none"
+              loading="eager"
+            />
+          </div>
+
+          {/* Light Ice-Blue Study Plan Card */}
+          <section className="w-full rounded-[28px] bg-[#e3eef5] px-6 py-7 text-left space-y-3">
+            <div className="text-[#1e293b] pb-1">
+              <BookOpen className="w-8 h-8 stroke-[1.85]" />
+            </div>
+
+            <h1 className="text-[22px] font-bold text-[#1e293b] tracking-tight leading-snug">
+              No study plan yet
+            </h1>
+
+            <p className="text-[15px] leading-[1.52] text-[#64748b] font-normal">
+              Create a personalised weekly path to stay focused and reach your exam goal with
+              confidence.
+            </p>
+          </section>
+
+          {/* Primary Pill Action Button + Subtext */}
+          <div className="pt-0.5 space-y-3 text-center">
             <button
-              key={link}
               type="button"
               onClick={() => {
-                if (link === 'Home') onNavigateHome();
-                setMobileMenuOpen(false);
+                setMobileShowCatalog(true);
+                window.scrollTo(0, 0);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                link === 'Learn' ? 'bg-[#006ee6] text-white' : 'text-[#475569] hover:bg-[#f1f5f9]'
-              }`}
+              className="w-full h-[54px] rounded-full bg-[#0066cc] hover:bg-[#005bb8] active:bg-[#004f9e] text-white text-[15.5px] font-semibold shadow-[0_6px_18px_rgba(0,102,204,0.24)] active:scale-[0.99] transition-all flex items-center justify-center cursor-pointer"
             >
-              {link}
+              Configure my study plan
             </button>
-          ))}
-        </div>
+
+            <p className="text-[13px] text-[#718096] font-normal">
+              Takes about 2 minutes · Adjust anytime
+            </p>
+          </div>
+        </main>
       )}
 
       {/* 
         ========================================================================
-        MAIN COURSES CONTAINER
+        MAIN COURSES CONTAINER (Always visible on Desktop; opens on Mobile when configured)
         ========================================================================
       */}
-      <main className="w-[92%] max-w-[1560px] mx-auto px-2 sm:px-4 lg:px-6 pt-5 space-y-5">
+      <main
+        className={`${
+          mobileShowCatalog ? 'block' : 'hidden md:block'
+        } w-full md:w-[92%] max-w-[1560px] mx-auto px-5 sm:px-6 lg:px-6 pt-3 md:pt-5 space-y-5`}
+      >
         
         {/* Breadcrumb & Updated Badge Bar */}
         <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#64748b]">
@@ -560,6 +601,18 @@ export default function CoursesPage({
         </div>
 
       </main>
+
+      {/* Fixed Mobile Bottom Navigation (< md) */}
+      <MobileBottomNav
+        activeTab="Learn"
+        onNavigateHome={onNavigateHome}
+        onNavigateLearn={() => {
+          setMobileShowCatalog(false);
+          window.scrollTo(0, 0);
+        }}
+        onNavigatePractice={onNavigatePractice}
+        onNavigateLive={onNavigateLiveClasses}
+      />
 
     </div>
   );

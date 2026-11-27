@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import canopediaWordmark from '../assets/canopedia-wordmark.png';
 import userAvatar from '../assets/user-avatar.png';
+import { MobileTopHeader, MobileBottomNav } from './MobileNavigation';
 import {
   getLatestAssessmentResult,
   fetchLatestResultFromApiOrStorage,
@@ -775,14 +776,17 @@ export default function DedicatedReviewAnswersPage({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f5f8fc] text-[#1e2733] font-sans flex flex-col justify-between selection:bg-[#006ee6] selection:text-white">
+    <div className="min-h-screen w-full bg-[#f5f8fb] md:bg-[#f5f8fc] text-[#1e2733] font-sans flex flex-col justify-between selection:bg-[#006ee6] selection:text-white pb-28 md:pb-0">
       <div>
+        {/* Compact Mobile Top Header (< md) */}
+        <MobileTopHeader onNavigateHome={onNavigateHome} onNavigateProfile={onNavigateProfile} />
+
         {/* 
           ========================================================================
-          TOP NAVIGATION BAR
+          TOP NAVIGATION BAR (Desktop >= md)
           ========================================================================
         */}
-        <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
+        <header className="hidden md:flex sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="flex items-center cursor-pointer" onClick={onNavigateHome}>
               <img
@@ -864,47 +868,15 @@ export default function DedicatedReviewAnswersPage({
                 <span className="text-[10px] text-[#64748b] font-medium">NCLEX-RN Prep</span>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-[#475569] hover:bg-[#f1f5f9]"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </header>
-
-        {/* Mobile Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-b border-[#e2e8f0] px-4 py-3 space-y-1">
-            {navLinks.map((link) => (
-              <button
-                key={link}
-                type="button"
-                onClick={() => {
-                  if (link === 'Home' && onNavigateHome) onNavigateHome();
-                  if (link === 'Learn' && onNavigateCourses) onNavigateCourses();
-                  if (link === 'Practice' && onNavigatePractice) onNavigatePractice();
-                  if (link === 'Live Classes' && onNavigateLiveClasses) onNavigateLiveClasses();
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                  link === 'Home' ? 'bg-[#006ee6] text-white' : 'text-[#475569] hover:bg-[#f1f5f9]'
-                }`}
-              >
-                {link}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* 
           ========================================================================
           MAIN REVIEW CONTENT CONTAINER
           ========================================================================
         */}
-        <main className="w-[92%] max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 pt-6 pb-14 space-y-6">
+        <main className="w-full md:w-[92%] max-w-[1440px] mx-auto px-5 sm:px-4 lg:px-6 pt-3 md:pt-6 pb-8 md:pb-14 space-y-5 md:space-y-6">
           {/* 
             ========================================================================
             TOP QUESTION STEM & NAVIGATION HEADER CARD (Matches Reference Screenshot)
@@ -1390,6 +1362,15 @@ export default function DedicatedReviewAnswersPage({
           </div>
         </div>
       </footer>
+
+      {/* Fixed Mobile Bottom Navigation (< md) */}
+      <MobileBottomNav
+        activeTab="Practice"
+        onNavigateHome={onNavigateHome}
+        onNavigateLearn={onNavigateCourses}
+        onNavigatePractice={onNavigatePractice}
+        onNavigateLive={onNavigateLiveClasses}
+      />
     </div>
   );
 }
