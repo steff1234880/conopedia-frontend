@@ -341,7 +341,8 @@ export default function App() {
       {/* 9c. Assessment Questions Page */}
       {currentRoute === 'assessment-questions' && (
         <AssessmentQuestionsPage
-          assessmentTitle={activeAssessmentContext?.title || 'NCLEX-RN Clinical Assessment'}
+          assessmentTitle={activeAssessmentContext?.title || 'NCLEX-RN PRACTICE'}
+          assessmentContext={activeAssessmentContext}
           onBackToLesson={() => navigateTo(activeAssessmentContext?.returnRoute || 'courses')}
           onExitToDashboard={() => navigateTo('dashboard')}
         />
