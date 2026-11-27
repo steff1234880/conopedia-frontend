@@ -132,6 +132,33 @@ export default function AssessmentQuestionsPage({
     return () => clearInterval(timer);
   }, [submitted, isLoading]);
 
+  const handleFinishExam = () => {
+    setShowEndExamModal(false);
+    const elapsedSeconds = Math.max(1, INITIAL_DURATION_SECONDS - secondsRemaining);
+    const savedResult = buildAndSaveAssessmentResult({
+      questions,
+      answers,
+      flagged,
+      elapsedSeconds,
+      assessmentTitle: assessmentContext?.title || assessmentTitle || 'RECOGNITION PRACTICE',
+      returnRoute: assessmentContext?.returnRoute || 'courses',
+    });
+
+    try {
+      sessionStorage.removeItem(ANSWERS_STORAGE_KEY);
+      sessionStorage.removeItem(FLAGS_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    if (onSubmitAssessment) {
+      onSubmitAssessment(savedResult);
+    } else {
+      setSubmitted(true);
+      window.scrollTo(0, 0);
+    }
+  };
+
   useEffect(() => {
     if (secondsRemaining === 0 && !submitted && !isLoading && questions.length > 0) {
       handleFinishExam();
@@ -208,33 +235,6 @@ export default function AssessmentQuestionsPage({
       window.scrollTo(0, 0);
     } else {
       setShowEndExamModal(true);
-    }
-  };
-
-  const handleFinishExam = () => {
-    setShowEndExamModal(false);
-    const elapsedSeconds = Math.max(1, INITIAL_DURATION_SECONDS - secondsRemaining);
-    const savedResult = buildAndSaveAssessmentResult({
-      questions,
-      answers,
-      flagged,
-      elapsedSeconds,
-      assessmentTitle: assessmentContext?.title || assessmentTitle || 'RECOGNITION PRACTICE',
-      returnRoute: assessmentContext?.returnRoute || 'courses',
-    });
-
-    try {
-      sessionStorage.removeItem(ANSWERS_STORAGE_KEY);
-      sessionStorage.removeItem(FLAGS_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-
-    if (onSubmitAssessment) {
-      onSubmitAssessment(savedResult);
-    } else {
-      setSubmitted(true);
-      window.scrollTo(0, 0);
     }
   };
 
@@ -573,8 +573,58 @@ export default function AssessmentQuestionsPage({
           <p className="text-xs text-[#475569] font-medium">{q.instruction}</p>
         </div>
 
-        {/* Responsive Matrix Table */}
-        <div className="overflow-x-auto pt-1">
+        {/* Responsive Matrix Cards (< sm) & Desktop Matrix Table (sm: and above) */}
+        <div className="sm:hidden space-y-3 pt-1">
+          {(q.rows || []).map((row) => {
+            const checkedCols = Array.isArray(rowSelections[row.id])
+              ? rowSelections[row.id]
+              : [];
+
+            return (
+              <div
+                key={row.id}
+                className="rounded-2xl bg-white border border-[#e6eef8] p-4 space-y-3 shadow-[0_1px_2px_rgba(15,23,42,0.02)]"
+              >
+                <div className="text-[13px] font-bold text-[#1e293b] leading-snug">
+                  {row.finding}
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {(q.columns || []).map((col) => {
+                    const isChecked = checkedCols.includes(col.id);
+                    return (
+                      <button
+                        key={col.id}
+                        type="button"
+                        role="checkbox"
+                        aria-checked={isChecked}
+                        onClick={() => handleMatrixToggle(row.id, col.id)}
+                        className={`w-full rounded-xl px-3.5 py-2.5 border text-left flex items-center justify-between transition cursor-pointer ${
+                          isChecked
+                            ? 'bg-[#eff6ff] border-[#0066ff] text-[#0f172a]'
+                            : 'bg-[#f8fafc] border-[#e2e8f0] text-[#475569]'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold">{col.label}</span>
+                        <span
+                          className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+                            isChecked
+                              ? 'bg-[#0066ff] text-white'
+                              : 'bg-white border border-[#cbd5e1]'
+                          }`}
+                        >
+                          {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="hidden sm:block overflow-x-auto pt-1">
           <div className="min-w-[560px] space-y-2.5">
             {/* Column Headers */}
             <div className="grid grid-cols-12 items-center px-4 pb-1 text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">
@@ -812,7 +862,7 @@ export default function AssessmentQuestionsPage({
                   {clause.prefix}
                 </span>
 
-                <div className="flex flex-col min-w-[250px] sm:min-w-[290px]">
+                <div className="flex flex-col w-full sm:w-auto sm:min-w-[290px]">
                   <span className="text-[9.5px] font-extrabold text-[#0066ff] uppercase tracking-wider mb-1 pl-2">
                     {clause.label}
                   </span>
@@ -1306,13 +1356,13 @@ export default function AssessmentQuestionsPage({
         Right: Timer Pill | End exam Pill | Avatar
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eaeff5] px-4 sm:px-8 lg:px-10 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eaeff5] px-3.5 sm:px-8 lg:px-10 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
           <img
             src={canopediaWordmark}
             alt="Canopedia"
             onClick={onExitToDashboard}
-            className="h-6 sm:h-6.5 w-auto object-contain cursor-pointer shrink-0"
+            className="h-5.5 sm:h-6.5 w-auto object-contain cursor-pointer shrink-0"
           />
 
           <div className="hidden sm:flex items-center gap-2 text-xs truncate">
@@ -1334,7 +1384,7 @@ export default function AssessmentQuestionsPage({
         </div>
 
         {/* Right Controls: Timer + End exam + Avatar */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Mobile Question Navigator Trigger */}
           <button
             type="button"
@@ -1348,8 +1398,8 @@ export default function AssessmentQuestionsPage({
           </button>
 
           {/* Timer Pill */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f1f5f9] text-[#0f172a] text-xs font-bold tracking-tight">
-            <Clock className="w-3.5 h-3.5 text-[#0066e6]" />
+          <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-[#f1f5f9] text-[#0f172a] text-[11px] sm:text-xs font-bold tracking-tight">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#0066e6]" />
             <span className="font-mono">{formatTimer(secondsRemaining)}</span>
           </div>
 
@@ -1357,7 +1407,7 @@ export default function AssessmentQuestionsPage({
           <button
             type="button"
             onClick={() => setShowEndExamModal(true)}
-            className="px-3.5 py-1.5 rounded-full bg-white hover:bg-[#fff1f2] border border-[#fecdd3] text-[#e11d48] text-xs font-bold transition cursor-pointer"
+            className="px-2.5 sm:px-3.5 py-1.5 rounded-full bg-white hover:bg-[#fff1f2] border border-[#fecdd3] text-[#e11d48] text-[11px] sm:text-xs font-bold transition cursor-pointer"
           >
             End exam
           </button>
@@ -1367,7 +1417,7 @@ export default function AssessmentQuestionsPage({
           <img
             src={myspaceAvatar}
             alt="Student profile"
-            className="w-8 h-8 rounded-full object-cover border border-[#e2e8f0] shrink-0"
+            className="hidden sm:block w-8 h-8 rounded-full object-cover border border-[#e2e8f0] shrink-0"
           />
         </div>
       </header>
@@ -1426,7 +1476,7 @@ export default function AssessmentQuestionsPage({
         - Clinical Case NGN items use Split-Screen: Client Record (Left) + Question (Right)
         ========================================================================
       */}
-      <main className="w-[92%] max-w-[1440px] mx-auto pt-5 sm:pt-6 flex-1">
+      <main className="w-full px-4 sm:px-0 sm:w-[92%] max-w-[1440px] mx-auto pt-4 sm:pt-6 flex-1">
         {currentQuestion.type === 'dosage-calc' ? (
           renderDosageCalcLayout(currentQuestion)
         ) : (
@@ -1459,17 +1509,17 @@ export default function AssessmentQuestionsPage({
         Right: Next > (or Submit exam on final item)
         ========================================================================
       */}
-      <footer className="fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#e6eef8] px-4 sm:px-8 lg:px-10 py-3">
-        <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 sm:gap-3">
+      <footer className="fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#e6eef8] px-3.5 sm:px-8 lg:px-10 py-2.5 sm:py-3">
+        <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Previous Button */}
             <button
               type="button"
               onClick={goToPrevious}
               disabled={currentIndex === 0}
-              className="h-[40px] px-4 rounded-xl border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-[#334155] flex items-center gap-1.5 transition cursor-pointer"
+              className="h-[40px] px-3 sm:px-4 rounded-xl border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-[#334155] flex items-center gap-1 sm:gap-1.5 transition cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 shrink-0" />
               <span>Previous</span>
             </button>
 
@@ -1477,18 +1527,23 @@ export default function AssessmentQuestionsPage({
             <button
               type="button"
               onClick={toggleFlagCurrent}
-              className={`h-[40px] px-4 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+              className={`h-[40px] px-3 sm:px-4 rounded-xl border text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition cursor-pointer ${
                 isCurrentFlagged
                   ? 'bg-[#fffbeb] border-[#fde68a] text-[#d97706]'
                   : 'bg-white border-[#e2e8f0] hover:bg-[#f8fafc] text-[#334155]'
               }`}
             >
               <Flag
-                className={`w-3.5 h-3.5 ${
+                className={`w-3.5 h-3.5 shrink-0 ${
                   isCurrentFlagged ? 'fill-[#f59e0b] text-[#d97706]' : 'text-[#f59e0b]'
                 }`}
               />
-              <span>{isCurrentFlagged ? 'Flagged' : 'Flag question'}</span>
+              <span className="hidden xs:inline sm:inline">
+                {isCurrentFlagged ? 'Flagged' : 'Flag question'}
+              </span>
+              <span className="inline xs:hidden sm:hidden">
+                {isCurrentFlagged ? 'Flagged' : 'Flag'}
+              </span>
             </button>
           </div>
 
@@ -1496,10 +1551,10 @@ export default function AssessmentQuestionsPage({
           <button
             type="button"
             onClick={goToNext}
-            className="h-[42px] px-6 rounded-xl bg-[#0066e6] hover:bg-[#0058c9] active:bg-[#004bb0] text-white text-xs sm:text-[13px] font-bold flex items-center gap-2 shadow-xs transition cursor-pointer"
+            className="h-[42px] px-4 sm:px-6 rounded-xl bg-[#0066e6] hover:bg-[#0058c9] active:bg-[#004bb0] text-white text-xs sm:text-[13px] font-bold flex items-center gap-1.5 sm:gap-2 shadow-xs transition cursor-pointer shrink-0"
           >
             <span>{currentIndex === totalQuestions - 1 ? 'Submit exam' : 'Next'}</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 shrink-0" />
           </button>
         </div>
       </footer>

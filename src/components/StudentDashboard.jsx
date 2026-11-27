@@ -27,6 +27,7 @@ import tutorial1Img from '../assets/tutorial-1.png';
 import tutorial2Img from '../assets/tutorial-2.png';
 import tutorial3Img from '../assets/tutorial-3.png';
 import userAvatar from '../assets/user-avatar.png';
+import { MobileTopHeader, MobileBottomNav } from './MobileNavigation';
 
 /**
  * Canopedia Student Dashboard
@@ -72,13 +73,19 @@ export default function StudentDashboard({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f5f8fb] md:bg-[#f8fafc] text-[#1e2733] font-sans selection:bg-[#006ee6] selection:text-white pb-20">
+    <div className="min-h-screen w-full bg-[#f5f8fb] md:bg-[#f8fafc] text-[#1e2733] font-sans selection:bg-[#006ee6] selection:text-white pb-28 md:pb-20">
+      {/* Compact Mobile Header (< md) */}
+      <MobileTopHeader
+        onNavigateHome={() => setActiveTab('Home')}
+        onNavigateProfile={onNavigateProfile}
+      />
+
       {/* 
         ========================================================================
-        TOP NAVIGATION BAR
+        DESKTOP & TABLET TOP NAVIGATION BAR (md: and above)
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between">
+      <header className="hidden md:flex sticky top-0 z-40 w-full bg-white border-b border-[#eef2f6] px-4 sm:px-8 lg:px-12 py-3 items-center justify-between">
         <div className="flex items-center gap-8">
           {/* Canopedia Brand Logo */}
           <div className="flex items-center cursor-pointer" onClick={() => setActiveTab('Home')}>
@@ -165,47 +172,8 @@ export default function StudentDashboard({
               <span className="text-[10px] text-[#64748b] font-medium">NCLEX-RN Prep</span>
             </div>
           </div>
-
-          {/* Mobile Menu Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-[#475569] hover:bg-[#f1f5f9]"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
       </header>
-
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#e2e8f0] px-4 py-3 space-y-1">
-          {navLinks.map((link) => (
-            <button
-              key={link}
-              type="button"
-              onClick={() => {
-                handleTabClick(link);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                activeTab === link ? 'bg-[#006ee6] text-white' : 'text-[#475569] hover:bg-[#f1f5f9]'
-              }`}
-            >
-              {link}
-            </button>
-          ))}
-          {onLogout && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50"
-            >
-              Sign out
-            </button>
-          )}
-        </div>
-      )}
 
       {/* 
         ========================================================================
@@ -827,6 +795,15 @@ export default function StudentDashboard({
         </div>
 
       </main>
+
+      {/* Fixed Mobile Bottom Navigation (< md) */}
+      <MobileBottomNav
+        activeTab="Home"
+        onNavigateHome={() => window.scrollTo(0, 0)}
+        onNavigateLearn={onNavigateCourses}
+        onNavigatePractice={onNavigatePractice}
+        onNavigateLive={onNavigateLiveClasses}
+      />
 
     </div>
   );
