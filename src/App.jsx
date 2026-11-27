@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WelcomePage from './components/WelcomePage';
 import SignUpStep1 from './components/SignUpStep1';
 import SignUpProgramSelection from './components/SignUpProgramSelection';
+import RegistrationCompletePage from './components/RegistrationCompletePage';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
 import StudentDashboard from './components/StudentDashboard';
@@ -55,6 +56,9 @@ export default function App() {
     }
     if (cleanHash === 'courses' || cleanHash === 'learn') {
       return 'courses';
+    }
+    if (cleanHash === 'registration-complete' || cleanHash === 'signup-complete' || cleanHash === 'onboarding-complete') {
+      return 'registration-complete';
     }
     if (cleanHash === 'signup-program' || cleanHash === 'your-program' || cleanHash === 'select-program') {
       return 'signup-program';
@@ -119,6 +123,15 @@ export default function App() {
             const updatedData = { ...(signUpFormData || {}), program: selectedProgram };
             setSignUpFormData(updatedData);
             demoAuthService.registerUserWithProgram(updatedData, selectedProgram);
+            navigateTo('registration-complete');
+          }}
+        />
+      )}
+
+      {/* 2c. Registration Complete Page */}
+      {currentRoute === 'registration-complete' && (
+        <RegistrationCompletePage
+          onGoToDashboard={() => {
             navigateTo('dashboard');
           }}
         />
