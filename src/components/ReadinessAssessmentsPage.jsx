@@ -23,6 +23,7 @@ export default function ReadinessAssessmentsPage({
   onNavigatePractice, 
   onNavigateLiveClasses, 
   onStartAssessment,
+  onViewResults,
   onLogout 
 }) {
   const [activeTab, setActiveTab] = useState('Practice');
@@ -311,7 +312,11 @@ export default function ReadinessAssessmentsPage({
                 </div>
                 <button
                   type="button"
-                  onClick={() => alert('Opening complete assessment history...')}
+                  onClick={() => {
+                    if (onViewResults) {
+                      onViewResults();
+                    }
+                  }}
                   className="text-xs font-semibold text-[#006ee6] hover:underline flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View history</span>
@@ -325,7 +330,11 @@ export default function ReadinessAssessmentsPage({
                   <div
                     key={item.id}
                     className="rounded-2xl bg-white border border-[#edf2f7] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-[#cbd5e1] transition cursor-pointer"
-                    onClick={() => alert(`Reviewing rationales for ${item.title}`)}
+                    onClick={() => {
+                      if (onViewResults) {
+                        onViewResults();
+                      }
+                    }}
                   >
                     <div className="flex items-start sm:items-center gap-3.5">
                       <div className="w-8 h-8 rounded-full bg-[#f0fdf4] border border-[#dcfce7] flex items-center justify-center text-[#16a34a] shrink-0 mt-0.5 sm:mt-0">

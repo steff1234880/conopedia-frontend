@@ -59,21 +59,42 @@ export default function App() {
       return 'exam-introduction';
     }
     if (
-      cleanRoute === 'assessment-review' ||
-      cleanRoute === 'review-answers' ||
-      cleanRoute === 'question-review' ||
-      cleanRoute === 'results-review'
-    ) {
-      return 'assessment-review';
-    }
-    if (
       cleanRoute === 'assessment-results' ||
+      cleanRoute === 'assessmentresults' ||
+      cleanRoute === 'assessment-review' ||
+      cleanRoute === 'assessmentreview' ||
+      cleanRoute === 'result-view' ||
+      cleanRoute === 'resultview' ||
+      cleanRoute === 'result_view' ||
+      cleanRoute === 'view-result' ||
+      cleanRoute === 'view-results' ||
+      cleanRoute === 'viewresult' ||
+      cleanRoute === 'viewresults' ||
+      cleanRoute === 'review-answers' ||
+      cleanRoute === 'reviewanswers' ||
+      cleanRoute === 'review-results' ||
+      cleanRoute === 'reviewresults' ||
+      cleanRoute === 'question-review' ||
+      cleanRoute === 'results-review' ||
       cleanRoute === 'exam-results' ||
-      cleanRoute === 'assessment-complete' ||
-      cleanRoute === 'final-results' ||
-      cleanRoute === 'results'
+      cleanRoute === 'examresults' ||
+      cleanRoute === 'results' ||
+      cleanRoute === 'result' ||
+      cleanRoute.startsWith('result-view/') ||
+      cleanRoute.startsWith('assessment-results/') ||
+      cleanRoute.startsWith('assessment-review/')
     ) {
       return 'assessment-results';
+    }
+    if (
+      cleanRoute === 'assessment-complete' ||
+      cleanRoute === 'assessmentcomplete' ||
+      cleanRoute === 'completion' ||
+      cleanRoute === 'exam-complete' ||
+      cleanRoute === 'final-results' ||
+      cleanRoute.startsWith('assessment-complete/')
+    ) {
+      return 'assessment-complete';
     }
     if (
       cleanRoute === 'assessment-questions' ||
@@ -185,6 +206,12 @@ export default function App() {
   useEffect(() => {
     const syncRouteFromLocation = () => {
       const resolved = resolveRoute();
+      if (resolved === 'assessment-results' || resolved === 'assessment-complete') {
+        const stored = getLatestAssessmentResult();
+        if (stored) {
+          setLatestAssessmentResult(stored);
+        }
+      }
       setCurrentRoute(resolved);
     };
 
@@ -289,6 +316,7 @@ export default function App() {
           onNavigateReadiness={() => navigateTo('readiness-assessments')}
           onNavigateProfile={() => navigateTo('profile')}
           onStartAssessment={handleOpenExamIntroduction}
+          onViewResults={() => navigateTo('assessment-results')}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -331,6 +359,7 @@ export default function App() {
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onNavigateReadiness={() => navigateTo('readiness-assessments')}
           onStartAssessment={handleOpenExamIntroduction}
+          onViewResults={() => navigateTo('assessment-results')}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -346,6 +375,7 @@ export default function App() {
           onNavigatePractice={() => navigateTo('practice')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onStartAssessment={handleOpenExamIntroduction}
+          onViewResults={() => navigateTo('assessment-results')}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -373,18 +403,27 @@ export default function App() {
           assessmentContext={activeAssessmentContext}
           onSubmitAssessment={(resultRecord) => {
             setLatestAssessmentResult(resultRecord);
-            navigateTo('assessment-results');
+            navigateTo('assessment-complete');
           }}
           onBackToLesson={() => navigateTo(activeAssessmentContext?.returnRoute || 'courses')}
           onExitToDashboard={() => navigateTo('dashboard')}
         />
       )}
 
-      {/* 9d. Assessment Completion / Final Results Page */}
-      {currentRoute === 'assessment-results' && (
+      {/* 9d. Assessment Completion Summary Page ("You nailed it!") */}
+      {currentRoute === 'assessment-complete' && (
         <AssessmentResultsPage
           resultData={latestAssessmentResult}
-          onReviewAnswers={() => navigateTo('assessment-review')}
+          onReviewAnswers={() => {
+            const refreshed = getLatestAssessmentResult() || latestAssessmentResult;
+            if (refreshed) setLatestAssessmentResult(refreshed);
+            navigateTo('assessment-results');
+          }}
+          onViewResults={() => {
+            const refreshed = getLatestAssessmentResult() || latestAssessmentResult;
+            if (refreshed) setLatestAssessmentResult(refreshed);
+            navigateTo('assessment-results');
+          }}
           onPracticeWeakAreas={(weakQuestions) => {
             const weakContext = {
               title: 'WEAK AREAS PRACTICE',
@@ -421,8 +460,8 @@ export default function App() {
         />
       )}
 
-      {/* 9e. Assessment Results & Review Answers Dashboard Page */}
-      {currentRoute === 'assessment-review' && (
+      {/* 9e. Assessment Results & Question Review Dashboard Page */}
+      {currentRoute === 'assessment-results' && (
         <AssessmentReviewDashboardPage
           resultData={latestAssessmentResult}
           onReturnToAssessments={() =>

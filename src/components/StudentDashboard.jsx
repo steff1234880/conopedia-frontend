@@ -51,6 +51,7 @@ export default function StudentDashboard({
   onNavigateReadiness, 
   onNavigateProfile,
   onStartAssessment,
+  onViewResults,
   onLogout 
 }) {
   const [activeTab, setActiveTab] = useState('Home');
@@ -499,6 +500,11 @@ export default function StudentDashboard({
 
                   <button
                     type="button"
+                    onClick={() => {
+                      if (onViewResults) {
+                        onViewResults();
+                      }
+                    }}
                     className="text-xs font-semibold text-[#006ee6] hover:underline flex items-center gap-1 cursor-pointer pt-2"
                   >
                     <span>Review logs</span>

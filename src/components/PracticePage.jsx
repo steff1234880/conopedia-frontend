@@ -28,6 +28,7 @@ export default function PracticePage({
   onNavigateLiveClasses, 
   onNavigateReadiness, 
   onStartAssessment,
+  onViewResults,
   onLogout 
 }) {
   const [activeTab, setActiveTab] = useState('Practice');
@@ -327,6 +328,8 @@ export default function PracticePage({
                               title: item.title,
                               returnRoute: 'practice',
                             });
+                          } else if (item.id === 'practice-test-review' && onViewResults) {
+                            onViewResults();
                           } else {
                             setActiveTestSession(item);
                           }
