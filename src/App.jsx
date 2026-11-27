@@ -37,7 +37,7 @@ export default function App() {
     // Support both hash routes (#/your-program) and pathname routes (/your-program)
     const rawHash = window.location.hash.split('?')[0].replace(/^#\/?/, '').trim().toLowerCase();
     const rawPath = window.location.pathname.split('?')[0].replace(/^\/+|\/+$/g, '').trim().toLowerCase();
-    const cleanRoute = rawHash || rawPath;
+    const cleanRoute = (rawHash || rawPath).replace(/\/+$/, '');
 
     // Direct match or normalize aliases
     if (
@@ -63,13 +63,21 @@ export default function App() {
       cleanRoute === 'review-answers' ||
       cleanRoute === 'reviewanswers' ||
       cleanRoute === 'review_answers' ||
+      cleanRoute === 'review-answer' ||
+      cleanRoute === 'reviewanswer' ||
       cleanRoute === 'question-review' ||
       cleanRoute === 'questionreview' ||
+      cleanRoute === 'questions-review' ||
       cleanRoute === 'detailed-review' ||
+      cleanRoute === 'detailed-review-answers' ||
       cleanRoute === 'detailedreview' ||
       cleanRoute === 'answer-review' ||
+      cleanRoute === 'answers-review' ||
       cleanRoute.startsWith('review-answers/') ||
-      cleanRoute.startsWith('question-review/')
+      cleanRoute.startsWith('question-review/') ||
+      cleanRoute.startsWith('detailed-review/') ||
+      cleanRoute.endsWith('/review-answers') ||
+      cleanRoute.endsWith('/review')
     ) {
       return 'review-answers';
     }

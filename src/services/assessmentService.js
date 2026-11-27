@@ -996,11 +996,51 @@ export function buildAndSaveAssessmentResult({
 export function getLatestAssessmentResult() {
   try {
     const fromSession = sessionStorage.getItem(LATEST_RESULT_STORAGE_KEY);
-    if (fromSession) return JSON.parse(fromSession);
+    if (fromSession) {
+      const parsed = JSON.parse(fromSession);
+      if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+        return parsed;
+      }
+    }
     const fromLocal = localStorage.getItem(LATEST_RESULT_STORAGE_KEY);
-    if (fromLocal) return JSON.parse(fromLocal);
+    if (fromLocal) {
+      const parsed = JSON.parse(fromLocal);
+      if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+        return parsed;
+      }
+    }
+    const rawHistory = localStorage.getItem(RESULTS_HISTORY_STORAGE_KEY);
+    if (rawHistory) {
+      const historyList = JSON.parse(rawHistory);
+      if (Array.isArray(historyList) && historyList.length > 0) {
+        return historyList[0];
+      }
+    }
   } catch {
     // ignore parse errors
+  }
+  return null;
+}
+
+export async function fetchLatestResultFromApiOrStorage() {
+  const localResult = getLatestAssessmentResult();
+  if (localResult) return localResult;
+
+  const apiBase = import.meta.env?.VITE_API_BASE_URL;
+  if (apiBase) {
+    try {
+      const res = await fetch(`${apiBase.replace(/\/$/, '')}/assessments/results/latest`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+          return data;
+        }
+      }
+    } catch {
+      // ignore network errors when offline
+    }
   }
   return null;
 }

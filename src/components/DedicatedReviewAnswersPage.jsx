@@ -24,6 +24,7 @@ import canopediaWordmark from '../assets/canopedia-wordmark.png';
 import userAvatar from '../assets/user-avatar.png';
 import {
   getLatestAssessmentResult,
+  fetchLatestResultFromApiOrStorage,
   evaluateQuestionResponse,
   getDetailedItemAnalysis,
 } from '../services/assessmentService';
@@ -66,7 +67,35 @@ export default function DedicatedReviewAnswersPage({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
 
-  const activeResult = resultData || getLatestAssessmentResult();
+  const [resolvedResult, setResolvedResult] = useState(
+    () => resultData || getLatestAssessmentResult()
+  );
+  const [isCheckingApi, setIsCheckingApi] = useState(false);
+
+  useEffect(() => {
+    if (resultData && Array.isArray(resultData.questions) && resultData.questions.length > 0) {
+      setResolvedResult(resultData);
+      return;
+    }
+    const local = getLatestAssessmentResult();
+    if (local) {
+      setResolvedResult(local);
+      return;
+    }
+    let active = true;
+    setIsCheckingApi(true);
+    fetchLatestResultFromApiOrStorage().then((loaded) => {
+      if (active) {
+        if (loaded) setResolvedResult(loaded);
+        setIsCheckingApi(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [resultData]);
+
+  const activeResult = resolvedResult;
   const questions = useMemo(() => activeResult?.questions || [], [activeResult]);
   const answers = useMemo(() => activeResult?.answers || {}, [activeResult]);
   const totalQuestions = questions.length;
@@ -79,7 +108,7 @@ export default function DedicatedReviewAnswersPage({
   // Toggle between 'your-answer' and 'correct-answer' tab inside the left response card
   const [answerTab, setAnswerTab] = useState('your-answer');
   const [navigatorOpen, setNavigatorOpen] = useState(false);
-  const [clientRecordExpanded, setClientRecordExpanded] = useState(false);
+  const [clientRecordExpanded, setClientRecordExpanded] = useState(true);
   const [activeChartTabId, setActiveChartTabId] = useState('orders');
 
   useEffect(() => {
@@ -103,6 +132,17 @@ export default function DedicatedReviewAnswersPage({
   }, [currentQuestion]);
 
   const navLinks = ['Home', 'Learn', 'Practice', 'Live Classes', 'Study Schedule'];
+
+  if (isCheckingApi) {
+    return (
+      <div className="min-h-screen w-full bg-[#f5f8fc] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-3 border-[#0066ff] border-t-transparent animate-spin" />
+          <p className="text-xs font-semibold text-[#64748b]">Loading submitted answers...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentQuestion) {
     return (
@@ -984,16 +1024,15 @@ export default function DedicatedReviewAnswersPage({
                   <span>Back to results</span>
                 </button>
 
-                {currentIndex > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => goToQuestion(currentIndex - 1)}
-                    className="h-[40px] px-4 rounded-full bg-white hover:bg-[#f8fafc] border border-[#dce6f2] text-xs font-bold text-[#334155] flex items-center gap-1 transition cursor-pointer"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Previous</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  disabled={currentIndex === 0}
+                  onClick={() => goToQuestion(currentIndex - 1)}
+                  className="h-[40px] px-4 rounded-full bg-white hover:bg-[#f8fafc] disabled:opacity-40 disabled:cursor-not-allowed border border-[#dce6f2] text-xs font-bold text-[#334155] flex items-center gap-1 transition cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Previous</span>
+                </button>
 
                 <button
                   type="button"
@@ -1007,7 +1046,7 @@ export default function DedicatedReviewAnswersPage({
                   className="h-[40px] px-5 rounded-full bg-[#0066ff] hover:bg-[#0058db] text-white text-xs font-bold flex items-center gap-2 shadow-[0_4px_12px_rgba(0,102,255,0.22)] transition cursor-pointer"
                 >
                   <span>
-                    {currentIndex < totalQuestions - 1 ? 'Next question' : 'Finish review'}
+                    {currentIndex < totalQuestions - 1 ? 'Next question' : 'Back to results'}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -1354,3 +1393,4 @@ export default function DedicatedReviewAnswersPage({
     </div>
   );
 }
+
