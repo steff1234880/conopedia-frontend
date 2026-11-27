@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Eye, EyeOff, ChevronDown, Check } from 'lucide-react';
 import leftLogo from '../assets/left-logo.png';
+import canopediaWordmark from '../assets/canopedia-wordmark.png';
 
 const COUNTRY_CODES = [
   { code: '+91', country: 'India', flag: '🇮🇳' },
@@ -91,14 +92,14 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
       
       {/* 
         ========================================================================
-        LEFT PANEL (Canopedia Brand)
+        LEFT PANEL (Canopedia Brand - Desktop & Tablet Only)
         Matches exact reference: soft aqua-sky gradient, subtle ambient spheres,
         crisp single logo, bold heading and clean footer tagline.
         ========================================================================
       */}
       <section 
         aria-label="Brand Introduction"
-        className="relative w-full md:w-[41%] lg:w-[40%] xl:w-[39%] min-h-[380px] md:min-h-screen flex flex-col justify-between items-center text-center px-6 py-8 sm:px-10 sm:py-12 lg:px-12 lg:py-14 overflow-hidden bg-gradient-to-b from-[#8fd8fa] via-[#aee3fb] to-[#daf1fd]"
+        className="hidden md:flex relative w-full md:w-[41%] lg:w-[40%] xl:w-[39%] md:min-h-screen flex-col justify-between items-center text-center px-6 py-8 sm:px-10 sm:py-12 lg:px-12 lg:py-14 overflow-hidden bg-gradient-to-b from-[#8fd8fa] via-[#aee3fb] to-[#daf1fd]"
       >
         {/* Soft Ambient Floating Spheres */}
         <div 
@@ -155,12 +156,30 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
       */}
       <section 
         aria-label="Personal Details Form"
-        className="w-full md:w-[59%] lg:w-[60%] xl:w-[61%] min-h-screen flex flex-col justify-center px-6 sm:px-12 md:px-14 lg:px-20 py-10 md:py-16 bg-[#f8fafc]"
+        className="w-full md:w-[59%] lg:w-[60%] xl:w-[61%] min-h-screen flex flex-col md:justify-center px-5 sm:px-10 md:px-14 lg:px-20 pt-6 pb-8 md:py-16 bg-[#f8fafc]"
       >
-        <div className="w-full max-w-[720px] mx-auto">
+        <div className="w-full max-w-[430px] md:max-w-[720px] mx-auto flex flex-col flex-1 md:flex-initial">
           
-          {/* Back button */}
-          <div className="mb-6">
+          {/* Mobile Top Header: Back Button + Centered Canopedia Wordmark */}
+          <div className="relative flex md:hidden items-center justify-center mb-6 pt-1">
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Go back"
+              className="absolute left-0 w-10 h-10 rounded-full bg-white border border-[#edf2f7] shadow-2xs flex items-center justify-center text-[#334155] hover:bg-[#f1f5f9] active:scale-95 transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5 -ml-0.5" />
+            </button>
+            <img
+              src={canopediaWordmark}
+              alt="Canopedia"
+              className="h-7 object-contain pointer-events-none select-none"
+              loading="eager"
+            />
+          </div>
+
+          {/* Desktop Back button */}
+          <div className="hidden md:block mb-6">
             <button
               type="button"
               onClick={onBack}
@@ -172,12 +191,14 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
           </div>
 
           {/* Heading */}
-          <h2 className="text-[26px] sm:text-[30px] font-bold text-[#1e2733] tracking-tight mb-2.5">
-            Your next chapter starts here.
+          <h2 className="text-[26px] sm:text-[30px] font-bold text-[#1e2733] tracking-tight leading-[1.2] mb-2.5">
+            Your next chapter
+            <br className="md:hidden" />{' '}
+            starts here.
           </h2>
 
           {/* Step Indicator */}
-          <p className="text-[11px] sm:text-[12px] font-semibold text-[#8a99a8] tracking-[0.08em] uppercase mb-8">
+          <p className="text-[11px] sm:text-[12px] font-medium md:font-semibold text-[#8a99a8] tracking-[0.06em] md:tracking-[0.08em] uppercase mb-5 md:mb-8">
             STEP 1 OF 3 · PERSONAL DETAILS
           </p>
 
@@ -366,11 +387,11 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
 
             </div>
 
-            {/* Bottom: Full-width blue Done button */}
+            {/* Bottom: Full-width blue action button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-[48px] sm:h-[50px] rounded-full bg-[#006ee6] hover:bg-[#0062d0] active:bg-[#0055b8] text-white text-[14.5px] font-semibold transition-all duration-150 shadow-sm active:scale-[0.99] flex items-center justify-center cursor-pointer disabled:opacity-75"
+              className="w-full h-[48px] sm:h-[50px] rounded-full bg-[#0066cc] md:bg-[#006ee6] hover:bg-[#005bb8] md:hover:bg-[#0062d0] active:bg-[#0055b8] text-white text-[14.5px] font-semibold transition-all duration-150 shadow-sm active:scale-[0.99] flex items-center justify-center cursor-pointer disabled:opacity-75"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -381,7 +402,10 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
                   <span>Validating...</span>
                 </span>
               ) : (
-                'Done'
+                <>
+                  <span className="md:hidden">Continue</span>
+                  <span className="hidden md:inline">Done</span>
+                </>
               )}
             </button>
           </form>

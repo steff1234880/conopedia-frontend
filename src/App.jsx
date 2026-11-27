@@ -179,6 +179,7 @@ export default function App() {
       {/* 2c. Registration Complete Page */}
       {currentRoute === 'registration-complete' && (
         <RegistrationCompletePage
+          onBack={() => navigateTo('your-program')}
           onGoToDashboard={() => {
             navigateTo('dashboard');
           }}
