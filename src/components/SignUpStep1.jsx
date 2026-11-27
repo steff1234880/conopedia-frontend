@@ -81,9 +81,9 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
       if (onContinue) {
         onContinue(formData);
       } else {
-        alert('Step 1 validated! Ready for Step 2.');
+        window.location.hash = '/your-program';
       }
-    }, 400);
+    }, 300);
   };
 
   return (

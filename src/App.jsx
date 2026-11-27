@@ -27,69 +27,107 @@ import { demoAuthService } from './services/authService';
  * - 'practice': Practice & Assessment page
  */
 export default function App() {
-  const getRouteFromHash = () => {
-    // Clean hash string: remove #, #/, query params, leading/trailing slashes and spaces
-    const cleanHash = window.location.hash.split('?')[0].replace(/^#\/?/, '').trim().toLowerCase();
+  const resolveRoute = () => {
+    // Support both hash routes (#/your-program) and pathname routes (/your-program)
+    const rawHash = window.location.hash.split('?')[0].replace(/^#\/?/, '').trim().toLowerCase();
+    const rawPath = window.location.pathname.split('?')[0].replace(/^\/+|\/+$/g, '').trim().toLowerCase();
+    const cleanRoute = rawHash || rawPath;
 
     // Direct match or normalize aliases
     if (
-      cleanHash === 'profile' || 
-      cleanHash === 'myspace' || 
-      cleanHash === 'my-space'
+      cleanRoute === 'profile' || 
+      cleanRoute === 'myspace' || 
+      cleanRoute === 'my-space'
     ) {
       return 'profile';
     }
     if (
-      cleanHash === 'readiness-assessments' || 
-      cleanHash === 'readiness-assessment' || 
-      cleanHash === 'readiness' || 
-      cleanHash === 'assessment' ||
-      cleanHash === 'readinessassessments'
+      cleanRoute === 'readiness-assessments' || 
+      cleanRoute === 'readiness-assessment' || 
+      cleanRoute === 'readiness' || 
+      cleanRoute === 'assessment' ||
+      cleanRoute === 'readinessassessments'
     ) {
       return 'readiness-assessments';
     }
-    if (cleanHash === 'practice' || cleanHash === 'practise' || cleanHash === 'self-assessment') {
+    if (cleanRoute === 'practice' || cleanRoute === 'practise' || cleanRoute === 'self-assessment') {
       return 'practice';
     }
-    if (cleanHash === 'live-classes' || cleanHash === 'liveclasses' || cleanHash === 'live_classes' || cleanHash === 'live') {
+    if (cleanRoute === 'live-classes' || cleanRoute === 'liveclasses' || cleanRoute === 'live_classes' || cleanRoute === 'live') {
       return 'live-classes';
     }
-    if (cleanHash === 'courses' || cleanHash === 'learn') {
+    if (cleanRoute === 'courses' || cleanRoute === 'learn') {
       return 'courses';
     }
-    if (cleanHash === 'registration-complete' || cleanHash === 'signup-complete' || cleanHash === 'onboarding-complete') {
+    if (
+      cleanRoute === 'registration-complete' ||
+      cleanRoute === 'registrationcomplete' ||
+      cleanRoute === 'signup-complete' ||
+      cleanRoute === 'onboarding-complete' ||
+      cleanRoute === 'signup/complete'
+    ) {
       return 'registration-complete';
     }
-    if (cleanHash === 'signup-program' || cleanHash === 'your-program' || cleanHash === 'select-program') {
-      return 'signup-program';
+    if (
+      cleanRoute === 'your-program' ||
+      cleanRoute === 'yourprogram' ||
+      cleanRoute === 'signup-program' ||
+      cleanRoute === 'select-program' ||
+      cleanRoute === 'program-selection' ||
+      cleanRoute === 'program' ||
+      cleanRoute === 'signup/program' ||
+      cleanRoute === 'onboarding/program'
+    ) {
+      return 'your-program';
     }
-    if (['signup', 'login', 'forgot-password', 'dashboard'].includes(cleanHash)) {
-      return cleanHash;
+    if (cleanRoute === 'signup' || cleanRoute === 'sign-up' || cleanRoute === 'register') {
+      return 'signup';
+    }
+    if (['login', 'forgot-password', 'dashboard'].includes(cleanRoute)) {
+      return cleanRoute;
     }
 
     // Default to 'welcome' only when no route or root route is specified
     return 'welcome';
   };
 
-  const [currentRoute, setCurrentRoute] = useState(getRouteFromHash);
-  const [signUpFormData, setSignUpFormData] = useState(null);
+  const [currentRoute, setCurrentRoute] = useState(resolveRoute);
+  const [signUpFormData, setSignUpFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('canopedia_signup_draft');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const navigateTo = (route) => {
     setCurrentRoute(route);
-    window.location.hash = `/${route}`;
+    const targetHash = `#/${route}`;
+    if (window.location.hash !== targetHash) {
+      window.location.hash = `/${route}`;
+    }
+    window.scrollTo(0, 0);
   };
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setCurrentRoute(getRouteFromHash());
+    const syncRouteFromLocation = () => {
+      const resolved = resolveRoute();
+      setCurrentRoute(resolved);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', syncRouteFromLocation);
+    window.addEventListener('popstate', syncRouteFromLocation);
+
+    const initialResolved = resolveRoute();
     if (!window.location.hash || window.location.hash === '#/' || window.location.hash === '#') {
-      window.location.hash = '/welcome';
+      window.history.replaceState(null, '', `#/${initialResolved}`);
     }
 
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', syncRouteFromLocation);
+      window.removeEventListener('popstate', syncRouteFromLocation);
+    };
   }, []);
 
   return (
@@ -109,19 +147,29 @@ export default function App() {
           onBack={() => navigateTo('welcome')}
           onContinue={(data) => {
             setSignUpFormData(data);
-            navigateTo('signup-program');
+            try {
+              sessionStorage.setItem('canopedia_signup_draft', JSON.stringify(data));
+            } catch {
+              // ignore storage errors
+            }
+            navigateTo('your-program');
           }}
         />
       )}
 
       {/* 2b. Sign Up Program Selection (Your Program) */}
-      {currentRoute === 'signup-program' && (
+      {currentRoute === 'your-program' && (
         <SignUpProgramSelection
           initialProgram={signUpFormData?.program || 'NCLEX-RN'}
           onBack={() => navigateTo('signup')}
           onComplete={(selectedProgram) => {
             const updatedData = { ...(signUpFormData || {}), program: selectedProgram };
             setSignUpFormData(updatedData);
+            try {
+              sessionStorage.removeItem('canopedia_signup_draft');
+            } catch {
+              // ignore storage errors
+            }
             demoAuthService.registerUserWithProgram(updatedData, selectedProgram);
             navigateTo('registration-complete');
           }}
