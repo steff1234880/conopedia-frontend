@@ -11,6 +11,8 @@ import LiveClassesPage from './components/LiveClassesPage';
 import PracticePage from './components/PracticePage';
 import ReadinessAssessmentsPage from './components/ReadinessAssessmentsPage';
 import MySpaceProfilePage from './components/MySpaceProfilePage';
+import ExamIntroductionPage from './components/ExamIntroductionPage';
+import AssessmentQuestionsPage from './components/AssessmentQuestionsPage';
 import { demoAuthService } from './services/authService';
 
 /**
@@ -40,6 +42,26 @@ export default function App() {
       cleanRoute === 'my-space'
     ) {
       return 'profile';
+    }
+    if (
+      cleanRoute === 'exam-introduction' ||
+      cleanRoute === 'exam-intro' ||
+      cleanRoute === 'examintroduction' ||
+      cleanRoute === 'assessment-introduction' ||
+      cleanRoute === 'assessment-intro' ||
+      cleanRoute === 'start-assessment' ||
+      cleanRoute === 'lesson-assessment' ||
+      cleanRoute === 'assessment-instructions'
+    ) {
+      return 'exam-introduction';
+    }
+    if (
+      cleanRoute === 'assessment-questions' ||
+      cleanRoute === 'exam-questions' ||
+      cleanRoute === 'assessment-exam' ||
+      cleanRoute === 'exam'
+    ) {
+      return 'assessment-questions';
     }
     if (
       cleanRoute === 'readiness-assessments' || 
@@ -92,6 +114,14 @@ export default function App() {
   };
 
   const [currentRoute, setCurrentRoute] = useState(resolveRoute);
+  const [activeAssessmentContext, setActiveAssessmentContext] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('canopedia_active_assessment');
+      return saved ? JSON.parse(saved) : { title: 'NCLEX-RN Clinical Assessment', returnRoute: 'courses' };
+    } catch {
+      return { title: 'NCLEX-RN Clinical Assessment', returnRoute: 'courses' };
+    }
+  });
   const [signUpFormData, setSignUpFormData] = useState(() => {
     try {
       const saved = sessionStorage.getItem('canopedia_signup_draft');
@@ -108,6 +138,20 @@ export default function App() {
       window.location.hash = `/${route}`;
     }
     window.scrollTo(0, 0);
+  };
+
+  const handleOpenExamIntroduction = (context = {}) => {
+    const nextContext = {
+      title: context.title || 'NCLEX-RN Clinical Assessment',
+      returnRoute: context.returnRoute || currentRoute || 'courses',
+    };
+    setActiveAssessmentContext(nextContext);
+    try {
+      sessionStorage.setItem('canopedia_active_assessment', JSON.stringify(nextContext));
+    } catch {
+      // ignore storage errors
+    }
+    navigateTo('exam-introduction');
   };
 
   useEffect(() => {
@@ -216,6 +260,7 @@ export default function App() {
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onNavigateReadiness={() => navigateTo('readiness-assessments')}
           onNavigateProfile={() => navigateTo('profile')}
+          onStartAssessment={handleOpenExamIntroduction}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -229,6 +274,7 @@ export default function App() {
           onNavigateHome={() => navigateTo('dashboard')}
           onNavigatePractice={() => navigateTo('practice')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onStartAssessment={handleOpenExamIntroduction}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -256,6 +302,7 @@ export default function App() {
           onNavigateCourses={() => navigateTo('courses')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onNavigateReadiness={() => navigateTo('readiness-assessments')}
+          onStartAssessment={handleOpenExamIntroduction}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
@@ -270,10 +317,33 @@ export default function App() {
           onNavigateCourses={() => navigateTo('courses')}
           onNavigatePractice={() => navigateTo('practice')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onStartAssessment={handleOpenExamIntroduction}
           onLogout={() => {
             demoAuthService.logout();
             navigateTo('welcome');
           }}
+        />
+      )}
+
+      {/* 9b. Exam Introduction Page */}
+      {currentRoute === 'exam-introduction' && (
+        <ExamIntroductionPage
+          onStartAssessment={() => navigateTo('assessment-questions')}
+          onBackToLesson={() => navigateTo(activeAssessmentContext?.returnRoute || 'courses')}
+          onNavigateHome={() => navigateTo('dashboard')}
+          onNavigateCourses={() => navigateTo('courses')}
+          onNavigatePractice={() => navigateTo('practice')}
+          onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onNavigateProfile={() => navigateTo('profile')}
+        />
+      )}
+
+      {/* 9c. Assessment Questions Page */}
+      {currentRoute === 'assessment-questions' && (
+        <AssessmentQuestionsPage
+          assessmentTitle={activeAssessmentContext?.title || 'NCLEX-RN Clinical Assessment'}
+          onBackToLesson={() => navigateTo(activeAssessmentContext?.returnRoute || 'courses')}
+          onExitToDashboard={() => navigateTo('dashboard')}
         />
       )}
 

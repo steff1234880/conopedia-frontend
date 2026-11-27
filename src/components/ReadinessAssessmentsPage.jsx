@@ -22,6 +22,7 @@ export default function ReadinessAssessmentsPage({
   onNavigateCourses, 
   onNavigatePractice, 
   onNavigateLiveClasses, 
+  onStartAssessment,
   onLogout 
 }) {
   const [activeTab, setActiveTab] = useState('Practice');
@@ -278,7 +279,16 @@ export default function ReadinessAssessmentsPage({
 
                 <button
                   type="button"
-                  onClick={() => setActiveModal(nextAssessment)}
+                  onClick={() => {
+                    if (onStartAssessment) {
+                      onStartAssessment({
+                        title: nextAssessment.title,
+                        returnRoute: 'readiness-assessments',
+                      });
+                    } else {
+                      setActiveModal(nextAssessment);
+                    }
+                  }}
                   className="px-6 py-2.5 rounded-xl bg-[#006ee6] hover:bg-[#0060cb] text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs hover:shadow active:scale-[0.99] cursor-pointer self-start sm:self-auto shrink-0"
                 >
                   <span>Start assessment</span>

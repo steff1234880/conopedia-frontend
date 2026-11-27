@@ -50,6 +50,7 @@ export default function StudentDashboard({
   onNavigateLiveClasses, 
   onNavigateReadiness, 
   onNavigateProfile,
+  onStartAssessment,
   onLogout 
 }) {
   const [activeTab, setActiveTab] = useState('Home');
@@ -337,7 +338,16 @@ export default function StudentDashboard({
             </div>
             <button
               type="button"
-              onClick={onNavigateReadiness || onNavigatePractice}
+              onClick={() => {
+                if (onStartAssessment) {
+                  onStartAssessment({
+                    title: 'NCLEX readiness check',
+                    returnRoute: 'dashboard',
+                  });
+                } else if (onNavigateReadiness) {
+                  onNavigateReadiness();
+                }
+              }}
               className="text-xs font-semibold text-[#006ee6] hover:underline flex items-center gap-0.5 cursor-pointer"
             >
               <span>Start now</span>
@@ -376,7 +386,16 @@ export default function StudentDashboard({
 
             <button
               type="button"
-              onClick={onNavigateReadiness || onNavigatePractice}
+              onClick={() => {
+                if (onStartAssessment) {
+                  onStartAssessment({
+                    title: 'NCLEX readiness check',
+                    returnRoute: 'dashboard',
+                  });
+                } else if (onNavigateReadiness) {
+                  onNavigateReadiness();
+                }
+              }}
               className="self-start sm:self-center px-5 py-2 rounded-full bg-[#006ee6] hover:bg-[#0060cb] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
             >
               <span>Start</span>
@@ -441,7 +460,16 @@ export default function StudentDashboard({
 
                   <button
                     type="button"
-                    onClick={onNavigateReadiness || onNavigatePractice}
+                    onClick={() => {
+                      if (onStartAssessment) {
+                        onStartAssessment({
+                          title: 'NCLEX readiness quiz',
+                          returnRoute: 'dashboard',
+                        });
+                      } else if (onNavigateReadiness) {
+                        onNavigateReadiness();
+                      }
+                    }}
                     className="text-xs font-semibold text-[#006ee6] hover:underline flex items-center gap-1 cursor-pointer pt-2"
                   >
                     <span>Start assessment</span>

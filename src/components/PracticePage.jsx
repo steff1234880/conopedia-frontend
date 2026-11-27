@@ -27,6 +27,7 @@ export default function PracticePage({
   onNavigateCourses, 
   onNavigateLiveClasses, 
   onNavigateReadiness, 
+  onStartAssessment,
   onLogout 
 }) {
   const [activeTab, setActiveTab] = useState('Practice');
@@ -320,7 +321,16 @@ export default function PracticePage({
 
                       <button
                         type="button"
-                        onClick={() => setActiveTestSession(item)}
+                        onClick={() => {
+                          if (item.id === 'nclex-readiness-quiz' && onStartAssessment) {
+                            onStartAssessment({
+                              title: item.title,
+                              returnRoute: 'practice',
+                            });
+                          } else {
+                            setActiveTestSession(item);
+                          }
+                        }}
                         className="text-xs font-semibold text-[#006ee6] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <span>{item.actionText}</span>

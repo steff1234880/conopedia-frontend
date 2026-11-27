@@ -23,7 +23,13 @@ import courseCard2 from '../assets/course-card-2.png';
 import courseCard3 from '../assets/course-card-3.png';
 import courseCard4 from '../assets/course-card-4.png';
 
-export default function CoursesPage({ onNavigateHome, onNavigatePractice, onNavigateLiveClasses, onLogout }) {
+export default function CoursesPage({
+  onNavigateHome,
+  onNavigatePractice,
+  onNavigateLiveClasses,
+  onStartAssessment,
+  onLogout,
+}) {
   const [activeTab, setActiveTab] = useState('Learn'); // Currently in Courses
   const [activeCategory, setActiveCategory] = useState('All Courses');
   const [searchQuery, setSearchQuery] = useState('');
@@ -407,13 +413,29 @@ export default function CoursesPage({ onNavigateHome, onNavigatePractice, onNavi
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3 pt-1">
+                    <div className="flex items-center flex-wrap gap-2.5 pt-1">
                       <button
                         type="button"
                         onClick={() => alert(`Previewing syllabus for ${course.title}`)}
                         className="px-4 py-2 rounded-full border border-[#e2e8f0] text-xs font-semibold text-[#0f172a] hover:bg-[#f8fafc] transition cursor-pointer"
                       >
                         Preview Syllabus
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onStartAssessment) {
+                            onStartAssessment({
+                              title: `${course.title} — Assessment`,
+                              returnRoute: 'courses',
+                            });
+                          }
+                        }}
+                        className="px-4 py-2 rounded-full bg-[#eff6ff] hover:bg-[#dbeafe] text-[#006ee6] text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <span>Start assessment</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
 
                       <button
