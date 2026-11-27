@@ -15,6 +15,7 @@ import ExamIntroductionPage from './components/ExamIntroductionPage';
 import AssessmentQuestionsPage from './components/AssessmentQuestionsPage';
 import AssessmentResultsPage from './components/AssessmentResultsPage';
 import AssessmentReviewDashboardPage from './components/AssessmentReviewDashboardPage';
+import DedicatedReviewAnswersPage from './components/DedicatedReviewAnswersPage';
 import { demoAuthService } from './services/authService';
 import { getLatestAssessmentResult } from './services/assessmentService';
 
@@ -40,8 +41,8 @@ export default function App() {
 
     // Direct match or normalize aliases
     if (
-      cleanRoute === 'profile' || 
-      cleanRoute === 'myspace' || 
+      cleanRoute === 'profile' ||
+      cleanRoute === 'myspace' ||
       cleanRoute === 'my-space'
     ) {
       return 'profile';
@@ -59,6 +60,20 @@ export default function App() {
       return 'exam-introduction';
     }
     if (
+      cleanRoute === 'review-answers' ||
+      cleanRoute === 'reviewanswers' ||
+      cleanRoute === 'review_answers' ||
+      cleanRoute === 'question-review' ||
+      cleanRoute === 'questionreview' ||
+      cleanRoute === 'detailed-review' ||
+      cleanRoute === 'detailedreview' ||
+      cleanRoute === 'answer-review' ||
+      cleanRoute.startsWith('review-answers/') ||
+      cleanRoute.startsWith('question-review/')
+    ) {
+      return 'review-answers';
+    }
+    if (
       cleanRoute === 'assessment-results' ||
       cleanRoute === 'assessmentresults' ||
       cleanRoute === 'assessment-review' ||
@@ -70,11 +85,8 @@ export default function App() {
       cleanRoute === 'view-results' ||
       cleanRoute === 'viewresult' ||
       cleanRoute === 'viewresults' ||
-      cleanRoute === 'review-answers' ||
-      cleanRoute === 'reviewanswers' ||
       cleanRoute === 'review-results' ||
       cleanRoute === 'reviewresults' ||
-      cleanRoute === 'question-review' ||
       cleanRoute === 'results-review' ||
       cleanRoute === 'exam-results' ||
       cleanRoute === 'examresults' ||
@@ -105,9 +117,9 @@ export default function App() {
       return 'assessment-questions';
     }
     if (
-      cleanRoute === 'readiness-assessments' || 
-      cleanRoute === 'readiness-assessment' || 
-      cleanRoute === 'readiness' || 
+      cleanRoute === 'readiness-assessments' ||
+      cleanRoute === 'readiness-assessment' ||
+      cleanRoute === 'readiness' ||
       cleanRoute === 'assessment' ||
       cleanRoute === 'readinessassessments'
     ) {
@@ -166,6 +178,7 @@ export default function App() {
   const [latestAssessmentResult, setLatestAssessmentResult] = useState(() =>
     getLatestAssessmentResult()
   );
+  const [reviewQuestionIndex, setReviewQuestionIndex] = useState(0);
   const [signUpFormData, setSignUpFormData] = useState(() => {
     try {
       const saved = sessionStorage.getItem('canopedia_signup_draft');
@@ -206,7 +219,11 @@ export default function App() {
   useEffect(() => {
     const syncRouteFromLocation = () => {
       const resolved = resolveRoute();
-      if (resolved === 'assessment-results' || resolved === 'assessment-complete') {
+      if (
+        resolved === 'assessment-results' ||
+        resolved === 'assessment-complete' ||
+        resolved === 'review-answers'
+      ) {
         const stored = getLatestAssessmentResult();
         if (stored) {
           setLatestAssessmentResult(stored);
@@ -414,10 +431,11 @@ export default function App() {
       {currentRoute === 'assessment-complete' && (
         <AssessmentResultsPage
           resultData={latestAssessmentResult}
-          onReviewAnswers={() => {
+          onReviewAnswers={(startIdx = 0) => {
             const refreshed = getLatestAssessmentResult() || latestAssessmentResult;
             if (refreshed) setLatestAssessmentResult(refreshed);
-            navigateTo('assessment-results');
+            setReviewQuestionIndex(typeof startIdx === 'number' ? startIdx : 0);
+            navigateTo('review-answers');
           }}
           onViewResults={() => {
             const refreshed = getLatestAssessmentResult() || latestAssessmentResult;
@@ -448,8 +466,8 @@ export default function App() {
           onReturnToLesson={() =>
             navigateTo(
               latestAssessmentResult?.returnRoute ||
-                activeAssessmentContext?.returnRoute ||
-                'courses'
+              activeAssessmentContext?.returnRoute ||
+              'courses'
             )
           }
           onNavigateHome={() => navigateTo('dashboard')}
@@ -464,6 +482,12 @@ export default function App() {
       {currentRoute === 'assessment-results' && (
         <AssessmentReviewDashboardPage
           resultData={latestAssessmentResult}
+          onOpenDetailedReview={(questionIdx = 0) => {
+            const refreshed = getLatestAssessmentResult() || latestAssessmentResult;
+            if (refreshed) setLatestAssessmentResult(refreshed);
+            setReviewQuestionIndex(typeof questionIdx === 'number' ? questionIdx : 0);
+            navigateTo('review-answers');
+          }}
           onReturnToAssessments={() =>
             navigateTo(
               latestAssessmentResult?.returnRoute === 'readiness-assessments'
@@ -475,6 +499,20 @@ export default function App() {
           onNavigateCourses={() => navigateTo('courses')}
           onNavigatePractice={() => navigateTo('practice')}
           onNavigateReadiness={() => navigateTo('readiness-assessments')}
+          onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onNavigateProfile={() => navigateTo('profile')}
+        />
+      )}
+
+      {/* 9f. Dedicated Detailed Review Answers Page (One Question at a Time) */}
+      {currentRoute === 'review-answers' && (
+        <DedicatedReviewAnswersPage
+          resultData={latestAssessmentResult}
+          initialQuestionIndex={reviewQuestionIndex}
+          onBackToResults={() => navigateTo('assessment-results')}
+          onNavigateHome={() => navigateTo('dashboard')}
+          onNavigateCourses={() => navigateTo('courses')}
+          onNavigatePractice={() => navigateTo('practice')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onNavigateProfile={() => navigateTo('profile')}
         />

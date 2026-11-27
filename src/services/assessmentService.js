@@ -1108,3 +1108,342 @@ export function getQuestionReviewDetails(question, response) {
   }
 }
 
+/**
+ * Computes rich NGN partial-credit scoring, remediation feedback, key findings breakdown,
+ * and clinical takeaway for a single submitted question on the Detailed Review Answers page.
+ */
+export function getDetailedItemAnalysis(question, response, elapsedTotalSeconds = 0, totalQuestions = 1) {
+  if (!question) {
+    return {
+      scoredPoints: 0,
+      maxPoints: 1,
+      scoringRule: '0 / 1 rule',
+      typeLabel: 'CLINICAL ITEM',
+      hintTag: 'Review item',
+      isFullyCorrect: false,
+      feedbackTitle: 'Not answered',
+      feedbackBody: 'No response was recorded for this question.',
+      remediationHeading: 'Clinical Remediation',
+      remediationBody: '',
+      keyPointsTitle: 'Why these findings matter',
+      keyPoints: [],
+      clinicalTakeaway: '',
+      estimatedItemSeconds: 1,
+    };
+  }
+
+  const evalStatus = evaluateQuestionResponse(question, response);
+  const avgSecs = Math.max(1, Math.round((Number(elapsedTotalSeconds) || 6) / Math.max(1, totalQuestions)));
+
+  switch (question.type) {
+    case 'matrix-grid': {
+      const userMap = response && typeof response === 'object' ? response : {};
+      const colLookup = {};
+      (question.columns || []).forEach((c) => {
+        colLookup[c.id] = c.label;
+      });
+
+      let rawPoints = 0;
+      let maxPoints = 0;
+      let firstWrongFinding = null;
+
+      const keyPoints = [];
+      (question.rows || []).forEach((row) => {
+        const expected = row.correctColumns || [];
+        const picked = Array.isArray(userMap[row.id]) ? userMap[row.id] : [];
+        maxPoints += expected.length;
+
+        picked.forEach((colId) => {
+          if (expected.includes(colId)) {
+            rawPoints += 1;
+          } else {
+            rawPoints -= 1;
+            if (!firstWrongFinding) {
+              firstWrongFinding = {
+                title: `${row.finding} → ${colLookup[colId] || colId}`,
+                body: `${row.finding} does not directly indicate ${(colLookup[colId] || colId).toLowerCase()}. Match each clinical cue to its primary pathophysiological mechanism.`,
+              };
+            }
+          }
+        });
+
+        if (expected.length > 0 && keyPoints.length < 4) {
+          keyPoints.push({
+            title: row.finding,
+            description: `Supports ${expected.map((id) => colLookup[id] || id).join(' & ')} based on the client's acute sickle cell crisis presentation.`,
+          });
+        }
+      });
+
+      const scoredPoints = Math.max(0, rawPoints);
+      return {
+        scoredPoints,
+        maxPoints: Math.max(1, maxPoints),
+        scoringRule: '+ / – rule',
+        typeLabel: 'MATRIX GRID',
+        hintTag: `${(question.rows || []).length} assessment rows`,
+        isFullyCorrect: evalStatus.isCorrect,
+        feedbackTitle: evalStatus.isCorrect ? 'Spot on!' : 'Not quite',
+        feedbackBody: evalStatus.isCorrect
+          ? 'You accurately mapped every clinical assessment finding to its underlying pathophysiological condition.'
+          : 'One or more condition mappings were missed or over-selected. Separate volume depletion cues from hypoxia and perfusion deficits.',
+        remediationHeading: firstWrongFinding
+          ? `Rationale: ${firstWrongFinding.title}`
+          : 'Matrix Classification Synthesis',
+        remediationBody: firstWrongFinding
+          ? firstWrongFinding.body
+          : question.rationale,
+        keyPointsTitle: 'Why these findings matter',
+        keyPoints,
+        clinicalTakeaway:
+          'Differentiate intravascular dehydration (elevated Na⁺, BUN, skin tenting) from impaired perfusion and gas exchange.',
+        estimatedItemSeconds: avgSecs,
+      };
+    }
+
+    case 'dosage-calc': {
+      const rawVal =
+        typeof response === 'object' && response !== null ? response.value : response;
+      const enteredStr = rawVal !== undefined && rawVal !== null ? String(rawVal).trim() : '';
+      const scoredPoints = evalStatus.isCorrect ? 1 : 0;
+
+      return {
+        scoredPoints,
+        maxPoints: 1,
+        scoringRule: '0 / 1 rule',
+        typeLabel: 'DOSAGE CALCULATION',
+        hintTag: `Round to 0.5 ${question.unitSuffix || 'mL'}`,
+        isFullyCorrect: evalStatus.isCorrect,
+        feedbackTitle: evalStatus.isCorrect ? 'Exact calculation!' : 'Not quite',
+        feedbackBody: evalStatus.isCorrect
+          ? `Your calculated volume (${enteredStr} ${question.unitSuffix || 'mL'}) matches the verified pediatric medication order.`
+          : `Your response (${enteredStr || 'blank'}) differs from the safe target dose of ${question.correctNumeric} ${question.unitSuffix || 'mL'}. Verify weight-based mg conversion before dividing by concentration.`,
+        remediationHeading: enteredStr
+          ? `Rationale: ${enteredStr} ${question.unitSuffix || 'mL'} vs. ${question.correctNumeric} ${question.unitSuffix || 'mL'}`
+          : 'Pediatric Dose Calculation Walkthrough',
+        remediationBody: question.rationale,
+        keyPointsTitle: 'Calculation safety checkpoints',
+        keyPoints: [
+          {
+            title: 'Step 1 · Verify Metric Weight',
+            description: 'Use 11.45 kg (not 25.2 lb) to compute the prescribed milligram dose: 11.45 kg × 1 mg/kg = 11.45 mg.',
+          },
+          {
+            title: 'Step 2 · Convert Mass to Volume',
+            description: 'Divide required dose by available concentration: 11.45 mg ÷ 2 mg/mL = 5.725 mL.',
+          },
+          {
+            title: 'Step 3 · Apply Rounding Protocol',
+            description: 'Rounding 5.725 mL to the nearest 0.5 mL yields 5.5 mL for safe oral syringe measurement.',
+          },
+        ],
+        clinicalTakeaway:
+          'Convert pounds to kilograms first and round only at the final step according to institutional medication policy.',
+        estimatedItemSeconds: avgSecs,
+      };
+    }
+
+    case 'cloze-dropdown': {
+      const userMap = response && typeof response === 'object' ? response : {};
+      const clauses = question.clauses || [];
+      let scoredPoints = 0;
+      let wrongClause = null;
+
+      const keyPoints = clauses.map((c) => {
+        const picked = userMap[c.id];
+        if (picked === c.correctAnswer) {
+          scoredPoints += 1;
+        } else if (!wrongClause) {
+          wrongClause = {
+            picked: picked || 'Unselected dropdown',
+            clause: c,
+          };
+        }
+        return {
+          title: `${c.label}: ${c.correctAnswer}`,
+          description: `Directly links "${c.prefix}" to the client's highest-priority physiological risk.`,
+        };
+      });
+
+      return {
+        scoredPoints,
+        maxPoints: Math.max(1, clauses.length),
+        scoringRule: '0 / 1 per blank',
+        typeLabel: 'CLOZE DROP-DOWN',
+        hintTag: `Complete ${clauses.length} dropdowns`,
+        isFullyCorrect: evalStatus.isCorrect,
+        feedbackTitle: evalStatus.isCorrect ? 'Accurate clinical synthesis!' : 'Not quite',
+        feedbackBody: evalStatus.isCorrect
+          ? 'Both dropdown selections accurately identify the primary complication and supporting bedside evidence.'
+          : 'Review how acute hypoxemia and tachypnea point to the most life-threatening complication in sickle cell crisis.',
+        remediationHeading: wrongClause
+          ? `Rationale: ${wrongClause.picked}`
+          : 'Complication & Evidence Rationale',
+        remediationBody: wrongClause
+          ? `"${wrongClause.picked}" is not the strongest match for ${wrongClause.clause.label.toLowerCase()}. ${question.rationale}`
+          : question.rationale,
+        keyPointsTitle: 'Why these selections matter',
+        keyPoints,
+        clinicalTakeaway:
+          'In vaso-occlusive crisis, new hypoxemia (SpO₂ < 95%) and dyspnea signal acute chest syndrome until proven otherwise.',
+        estimatedItemSeconds: avgSecs,
+      };
+    }
+
+    case 'drag-drop': {
+      const slotMap = response && typeof response === 'object' ? response : {};
+      const bankLookup = {};
+      (question.wordBank || []).forEach((w) => {
+        bankLookup[w.id] = w.text;
+      });
+
+      const slots = question.slots || [];
+      let scoredPoints = 0;
+      let wrongSlotInfo = null;
+
+      const keyPoints = slots.map((s) => {
+        const pickedId = slotMap[s.id];
+        const correctText = bankLookup[s.correctWordId] || s.correctWordId;
+        if (pickedId === s.correctWordId) {
+          scoredPoints += 1;
+        } else if (!wrongSlotInfo) {
+          wrongSlotInfo = {
+            pickedText: pickedId ? bankLookup[pickedId] || pickedId : 'Blank slot',
+            leadText: s.leadText,
+            correctText,
+          };
+        }
+        return {
+          title: `${s.leadText} → ${correctText}`,
+          description: 'Aligns nursing interventions with the ABC priority framework and active orders.',
+        };
+      });
+
+      return {
+        scoredPoints,
+        maxPoints: Math.max(1, slots.length),
+        scoringRule: '0 / 1 per slot',
+        typeLabel: 'DRAG & DROP · PLAN OF CARE',
+        hintTag: `Fill ${slots.length} slots`,
+        isFullyCorrect: evalStatus.isCorrect,
+        feedbackTitle: evalStatus.isCorrect ? 'Well prioritized!' : 'Not quite',
+        feedbackBody: evalStatus.isCorrect
+          ? 'Your nursing plan of care sequences oxygenation, titration, and acute pain control in priority order.'
+          : 'Check the sequence of clinical priorities—oxygenation deficits take precedence before secondary risks.',
+        remediationHeading: wrongSlotInfo
+          ? `Rationale: ${wrongSlotInfo.pickedText}`
+          : 'Plan of Care Sequencing',
+        remediationBody: wrongSlotInfo
+          ? `For "${wrongSlotInfo.leadText}", "${wrongSlotInfo.pickedText}" is less urgent than "${wrongSlotInfo.correctText}". ${question.rationale}`
+          : question.rationale,
+        keyPointsTitle: 'Why this plan of care matters',
+        keyPoints,
+        clinicalTakeaway:
+          'Correct hypoxemia first to halt further erythrocyte sickling while simultaneously treating severe vaso-occlusive pain.',
+        estimatedItemSeconds: avgSecs,
+      };
+    }
+
+    case 'incident-report': {
+      const selected = Array.isArray(response) ? response : [];
+      const segments = question.segments || [];
+      const relevantSegments = segments.filter((s) => s.isRelevant);
+      let rawPoints = 0;
+      let wrongPickedSeg = null;
+
+      segments.forEach((seg) => {
+        const wasPicked = selected.includes(seg.id);
+        if (wasPicked && seg.isRelevant) rawPoints += 1;
+        if (wasPicked && !seg.isRelevant) {
+          rawPoints -= 1;
+          if (!wrongPickedSeg) wrongPickedSeg = seg;
+        }
+      });
+
+      const scoredPoints = Math.max(0, rawPoints);
+      return {
+        scoredPoints,
+        maxPoints: Math.max(1, relevantSegments.length),
+        scoringRule: '+ / – rule',
+        typeLabel: 'INCIDENT REPORT',
+        hintTag: `Select ${relevantSegments.length} findings`,
+        isFullyCorrect: evalStatus.isCorrect,
+        feedbackTitle: evalStatus.isCorrect ? 'Sharp safety awareness!' : 'Not quite',
+        feedbackBody: evalStatus.isCorrect
+          ? 'You identified every shift variance requiring immediate safety intervention and incident documentation.'
+          : 'Review each bedside event—distinguish routine therapeutic care from thermal hazards, pump errors, and fall risks.',
+        remediationHeading: wrongPickedSeg
+          ? 'Rationale: Routine Therapeutic Care Selected'
+          : 'Clinical Variance & Safety Analysis',
+        remediationBody: wrongPickedSeg
+          ? `"${wrongPickedSeg.text}" reflects safe, expected nursing care and does not require an incident report. ${question.rationale}`
+          : question.rationale,
+        keyPointsTitle: 'Why these safety events matter',
+        keyPoints: relevantSegments.map((s, idx) => ({
+          title: `Safety Variance ${idx + 1}`,
+          description: s.text,
+        })),
+        clinicalTakeaway:
+          'Never apply cold packs in sickle cell crisis, double-check high-volume IV pump rates, and enforce fall precautions after IV opioids.',
+        estimatedItemSeconds: avgSecs,
+      };
+    }
+
+    case 'multiple-response':
+    default: {
+      const selected = Array.isArray(response)
+        ? response
+        : response
+        ? [response]
+        : [];
+      const options = question.options || [];
+      const correctOptions = options.filter(
+        (o) => o.isCorrect || (question.correctOptionId && question.correctOptionId === o.id)
+      );
+
+      let rawPoints = 0;
+      let wrongOption = null;
+
+      options.forEach((opt) => {
+        const isCorrectOpt = Boolean(
+          opt.isCorrect || (question.correctOptionId && question.correctOptionId === opt.id)
+        );
+        const wasPicked = selected.includes(opt.id);
+        if (wasPicked && isCorrectOpt) rawPoints += 1;
+        if (wasPicked && !isCorrectOpt) {
+          rawPoints -= 1;
+          if (!wrongOption) wrongOption = opt;
+        }
+      });
+
+      const scoredPoints = Math.max(0, rawPoints);
+      return {
+        scoredPoints,
+        maxPoints: Math.max(1, correctOptions.length),
+        scoringRule: '+ / – rule',
+        typeLabel: 'MULTIPLE RESPONSE',
+        hintTag: `Select ${correctOptions.length} findings`,
+        isFullyCorrect: evalStatus.isCorrect,
+        feedbackTitle: evalStatus.isCorrect ? 'Excellent clinical judgment!' : 'Not quite',
+        feedbackBody: evalStatus.isCorrect
+          ? 'All selected nursing interventions align with evidence-based clinical safety thresholds.'
+          : 'Your selection missed priority interventions or included contraindicated actions. Prioritize acute physiological needs.',
+        remediationHeading: wrongOption
+          ? `Rationale: ${wrongOption.text.slice(0, 58)}${wrongOption.text.length > 58 ? '…' : ''}`
+          : 'Candidate Choice Remediation',
+        remediationBody: wrongOption
+          ? `"${wrongOption.text}" is contraindicated or non-priority for this client's acute presentation. ${question.rationale}`
+          : question.rationale,
+        keyPointsTitle: 'Why these findings matter',
+        keyPoints: correctOptions.map((o) => ({
+          title: o.text.split(' to ')[0] || o.text,
+          description: o.text,
+        })),
+        clinicalTakeaway:
+          'Prioritize acute physiological stabilization (Hydration, Oxygenation, Pain control) and avoid vasoconstrictive triggers.',
+        estimatedItemSeconds: avgSecs,
+      };
+    }
+  }
+}
+

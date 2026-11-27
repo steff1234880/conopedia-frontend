@@ -594,15 +594,16 @@ export default function AssessmentResultsPage({
             </h2>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-              {/* 1. Result View / Review answers */}
+              {/* 1. Review answers -> Opens Dedicated Review Answers Page */}
               <button
                 type="button"
                 onClick={() => {
-                  const openResultsHandler = onViewResults || onReviewAnswers;
-                  if (openResultsHandler) {
-                    openResultsHandler();
+                  if (onReviewAnswers) {
+                    onReviewAnswers(0);
+                  } else if (onViewResults) {
+                    onViewResults();
                   } else {
-                    window.location.hash = '/assessment-results';
+                    window.location.hash = '/review-answers';
                   }
                 }}
                 className="w-full sm:w-auto px-6 h-[44px] rounded-full bg-[#0070f3] hover:bg-[#005fe0] active:bg-[#0051c2] text-white text-xs sm:text-[13px] font-bold flex items-center justify-center gap-2 shadow-[0_6px_16px_rgba(0,112,243,0.22)] transition cursor-pointer"

@@ -39,6 +39,7 @@ const TYPE_TITLE_MAP = {
 
 export default function AssessmentReviewDashboardPage({
   resultData,
+  onOpenDetailedReview,
   onReturnToAssessments,
   onNavigateHome,
   onNavigateCourses,
@@ -228,6 +229,10 @@ export default function AssessmentReviewDashboardPage({
     scorePercent >= 70 ? '#10b981' : scorePercent >= 55 ? '#f59e0b' : '#ef4444';
 
   const openQuestionDetail = (idx) => {
+    if (onOpenDetailedReview) {
+      onOpenDetailedReview(idx);
+      return;
+    }
     const targetItem = evaluatedItems[idx];
     if (targetItem) {
       setSelectedQuestionIndex(idx);
@@ -1555,3 +1560,4 @@ export default function AssessmentReviewDashboardPage({
     </div>
   );
 }
+
