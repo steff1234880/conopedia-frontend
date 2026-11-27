@@ -120,6 +120,10 @@ export const BUILTIN_NGN_ASSESSMENT_QUESTIONS = [
     id: 'ngn-q1-matrix',
     questionNumber: 1,
     type: 'matrix-grid',
+    reviewTitle: 'Clinical judgment',
+    clientNeedsCategory: 'Physiological Adaptation',
+    shortDomain: 'Pathophysiology',
+    cohortAvgPercent: 56,
     sectionLabel: 'NCLEX-RN PRACTICE',
     typeBadge: 'MATRIX GRID',
     defaultTab: 'laboratory',
@@ -187,6 +191,10 @@ export const BUILTIN_NGN_ASSESSMENT_QUESTIONS = [
     id: 'ngn-q2-dosage',
     questionNumber: 2,
     type: 'dosage-calc',
+    reviewTitle: 'Dosage calculation',
+    clientNeedsCategory: 'Pharmacological Therapies',
+    shortDomain: 'Pharmacology',
+    cohortAvgPercent: 62,
     sectionLabel: 'NCLEX-RN PRACTICE',
     topicBadge: 'PEDIATRIC MEDICATION',
     topicSubheading: 'Clinical Dosage Calculation',
@@ -217,6 +225,10 @@ export const BUILTIN_NGN_ASSESSMENT_QUESTIONS = [
     id: 'ngn-q3-cloze',
     questionNumber: 3,
     type: 'cloze-dropdown',
+    reviewTitle: 'Acute respiratory risk',
+    clientNeedsCategory: 'Reduction of Risk Potential',
+    shortDomain: 'Acute changes',
+    cohortAvgPercent: 58,
     sectionLabel: 'NCLEX-RN PRACTICE',
     typeBadge: 'CLOZE DROP-DOWN',
     defaultTab: 'orders',
@@ -261,6 +273,10 @@ export const BUILTIN_NGN_ASSESSMENT_QUESTIONS = [
     id: 'ngn-q4-dragdrop',
     questionNumber: 4,
     type: 'drag-drop',
+    reviewTitle: 'Prioritization',
+    clientNeedsCategory: 'Management of Care',
+    shortDomain: 'Prioritization',
+    cohortAvgPercent: 55,
     sectionLabel: 'NCLEX-RN PRACTICE',
     typeBadge: 'DRAG WORDS · PLAN OF CARE',
     nextGenTag: 'Sentence Completion',
@@ -305,6 +321,10 @@ export const BUILTIN_NGN_ASSESSMENT_QUESTIONS = [
     id: 'ngn-q5-incident',
     questionNumber: 5,
     type: 'incident-report',
+    reviewTitle: 'Safety & incident review',
+    clientNeedsCategory: 'Safety and Infection Control',
+    shortDomain: 'Safety',
+    cohortAvgPercent: 60,
     sectionLabel: 'NCLEX-RN PRACTICE',
     typeBadge: 'INCIDENT REPORT · SELECT RELEVANT INFO',
     defaultTab: 'nurses-notes',
@@ -356,6 +376,10 @@ export const BUILTIN_NGN_ASSESSMENT_QUESTIONS = [
     id: 'ngn-q6-sata',
     questionNumber: 6,
     type: 'multiple-response',
+    reviewTitle: 'Multiple response',
+    clientNeedsCategory: 'Physiological Adaptation',
+    shortDomain: 'Fundamentals',
+    cohortAvgPercent: 56,
     sectionLabel: 'NCLEX-RN PRACTICE',
     typeBadge: 'MULTIPLE RESPONSE · SELECT ALL THAT APPLY',
     defaultTab: 'orders',
@@ -724,10 +748,168 @@ export function buildAndSaveAssessmentResult({
   const weakQuestionIds = incorrectItems.map((i) => i.question.id);
   const weakQuestions = incorrectItems.map((i) => i.question);
 
+  // Format MM:SS clock string (e.g. "24:18")
+  const minsClock = Math.floor(safeElapsed / 60);
+  const secsClock = safeElapsed % 60;
+  const timeSpentClock = `${String(minsClock).padStart(2, '0')}:${String(secsClock).padStart(
+    2,
+    '0'
+  )}`;
+
+  // Full date string (e.g. "October 5, 2026")
+  let completedDateLong = 'Today';
+  try {
+    completedDateLong = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    completedDateLong = 'Completed today';
+  }
+
+  // Lookup previous attempts from history to compute attempt number & prior category scores
+  let existingHistory = [];
+  try {
+    const rawHist = localStorage.getItem(RESULTS_HISTORY_STORAGE_KEY);
+    existingHistory = rawHist ? JSON.parse(rawHist) : [];
+    if (!Array.isArray(existingHistory)) existingHistory = [];
+  } catch {
+    existingHistory = [];
+  }
+
+  const priorAttemptRecord = existingHistory[0] || null;
+  const attemptIndex = existingHistory.length + 1;
+  const maxAttempts = 6;
+  const attemptBadgeText = `Attempt ${Math.min(attemptIndex, maxAttempts)} of ${maxAttempts}`;
+
+  // Dynamic performance level, rank pill, and Chance of Passing band
+  let passingZoneLabel = 'Passing Zone';
+  let rankBadgeText = 'Top 41%';
+  let readinessHeading = "You're nearly ready";
+  let readinessFeedback =
+    'Keep sharpening your weaker topics to close the final gap before your scheduled exam date.';
+  let chanceOfPassingBand = 'High'; // 'Low' | 'Borderline' | 'High' | 'Very High'
+  let chanceOfPassingLabel = 'High Probability';
+
+  if (scorePercent >= 85) {
+    passingZoneLabel = 'Passing Zone';
+    rankBadgeText = `Top ${Math.max(5, 100 - scorePercent)}%`;
+    readinessHeading = "You're exam ready";
+    readinessFeedback =
+      'Excellent clinical mastery across NextGen item formats. Maintain momentum until exam day.';
+    chanceOfPassingBand = 'Very High';
+    chanceOfPassingLabel = 'Very High Probability';
+  } else if (scorePercent >= 70) {
+    passingZoneLabel = 'Passing Zone';
+    rankBadgeText = `Top ${Math.max(18, 114 - scorePercent)}%`;
+    readinessHeading = "You're nearly ready";
+    readinessFeedback =
+      'Keep sharpening your weaker topics to close the final gap before your scheduled exam date.';
+    chanceOfPassingBand = 'High';
+    chanceOfPassingLabel = 'High Probability';
+  } else if (scorePercent >= 55) {
+    passingZoneLabel = 'Borderline';
+    rankBadgeText = 'Building Mastery';
+    readinessHeading = 'Close to passing standard';
+    readinessFeedback =
+      'Review missed clinical rationales and practice targeted weak areas to reach the passing zone.';
+    chanceOfPassingBand = 'Borderline';
+    chanceOfPassingLabel = 'Borderline Probability';
+  } else {
+    passingZoneLabel = 'Needs Focus';
+    rankBadgeText = 'Remediation Needed';
+    readinessHeading = 'Strengthen core concepts';
+    readinessFeedback =
+      'Focus on foundational safety, pharmacology, and ABC prioritization before your next benchmark.';
+    chanceOfPassingBand = 'Low';
+    chanceOfPassingLabel = 'Low Probability';
+  }
+
+  // Compute NCLEX-RN Client Needs category breakdown dynamically from submitted questions
+  const categoryBuckets = {};
+  itemEvaluations.forEach(({ question: q, isCorrect }) => {
+    const catName =
+      q.clientNeedsCategory ||
+      q.category ||
+      (q.type === 'dosage-calc'
+        ? 'Pharmacological Therapies'
+        : q.type === 'incident-report'
+        ? 'Safety and Infection Control'
+        : q.type === 'drag-drop'
+        ? 'Management of Care'
+        : q.type === 'cloze-dropdown'
+        ? 'Reduction of Risk Potential'
+        : 'Physiological Adaptation');
+
+    if (!categoryBuckets[catName]) {
+      categoryBuckets[catName] = {
+        category: catName,
+        correct: 0,
+        total: 0,
+        cohortSum: 0,
+      };
+    }
+    categoryBuckets[catName].total += 1;
+    if (isCorrect) categoryBuckets[catName].correct += 1;
+    categoryBuckets[catName].cohortSum += Number(q.cohortAvgPercent || 57);
+  });
+
+  const priorCategoryMap = {};
+  if (Array.isArray(priorAttemptRecord?.categoryBreakdown)) {
+    priorAttemptRecord.categoryBreakdown.forEach((c) => {
+      priorCategoryMap[c.category] = c.percent;
+    });
+  }
+
+  const categoryBreakdown = Object.values(categoryBuckets).map((bucket) => {
+    const percent =
+      bucket.total > 0 ? Math.round((bucket.correct / bucket.total) * 100) : 0;
+    const cohortAvg =
+      bucket.total > 0 ? Math.round(bucket.cohortSum / bucket.total) : 57;
+    const priorPercent =
+      priorCategoryMap[bucket.category] !== undefined
+        ? priorCategoryMap[bucket.category]
+        : 0;
+    return {
+      category: bucket.category,
+      correct: bucket.correct,
+      total: bucket.total,
+      percent,
+      priorPercent,
+      cohortAvg,
+      needsRemediation: percent < 50,
+    };
+  });
+
+  // Strong Foundations vs. Focus Area to Improve derived dynamically from items/categories
+  const strongDomainsSet = new Set();
+  const weakDomainsSet = new Set();
+
+  itemEvaluations.forEach(({ question: q, isCorrect }) => {
+    const domainLabel =
+      q.shortDomain ||
+      q.reviewTitle ||
+      q.clientNeedsCategory ||
+      TOPIC_TAKEAWAYS[q.type]?.topicTitle ||
+      'Clinical Judgment';
+    if (isCorrect) {
+      strongDomainsSet.add(domainLabel);
+    } else {
+      weakDomainsSet.add(domainLabel);
+    }
+  });
+
+  const strongFoundationsList = Array.from(strongDomainsSet).slice(0, 4);
+  const focusAreasList = Array.from(weakDomainsSet).slice(0, 4);
+
   const resultRecord = {
     id: `result-${Date.now()}`,
     completedAtIso: new Date().toISOString(),
     completedAtFormatted: formatCompletedTimestamp(new Date()),
+    completedDateLong,
+    assessmentDisplayName: assessmentTitle || 'NCLEX-RN readiness assessment',
+    attemptBadgeText,
     practiceLabel: (assessmentTitle || 'RECOGNITION PRACTICE').toUpperCase(),
     returnRoute: returnRoute || 'courses',
     totalQuestions,
@@ -736,11 +918,21 @@ export function buildAndSaveAssessmentResult({
     scorePercent,
     benchmarkPercent,
     benchmarkMet,
+    passingZoneLabel,
+    rankBadgeText,
+    readinessHeading,
+    readinessFeedback,
+    chanceOfPassingBand,
+    chanceOfPassingLabel,
     correctCount,
     reviewItemsCount,
     elapsedSeconds: safeElapsed,
+    timeSpentClock,
     timeSpentFormatted: formatDurationShort(safeElapsed),
     avgTimePerQuestionFormatted: `~${formatDurationShort(avgSecondsPerQuestion)} / question`,
+    strongFoundationsList,
+    focusAreasList,
+    categoryBreakdown,
     takeaway: {
       badge: 'LEARNING TAKEAWAY',
       category: 'Clinical Synthesis',

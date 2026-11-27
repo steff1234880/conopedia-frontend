@@ -46,6 +46,7 @@ import {
  */
 export default function AssessmentResultsPage({
   resultData,
+  onReviewAnswers,
   onPracticeWeakAreas,
   onReturnToLesson,
   onNavigateHome,
@@ -596,8 +597,12 @@ export default function AssessmentResultsPage({
               <button
                 type="button"
                 onClick={() => {
-                  setViewMode('review');
-                  window.scrollTo(0, 0);
+                  if (onReviewAnswers) {
+                    onReviewAnswers();
+                  } else {
+                    setViewMode('review');
+                    window.scrollTo(0, 0);
+                  }
                 }}
                 className="w-full sm:w-auto px-6 h-[44px] rounded-full bg-[#0070f3] hover:bg-[#005fe0] active:bg-[#0051c2] text-white text-xs sm:text-[13px] font-bold flex items-center justify-center gap-2 shadow-[0_6px_16px_rgba(0,112,243,0.22)] transition cursor-pointer"
               >
@@ -683,3 +688,4 @@ export default function AssessmentResultsPage({
     </div>
   );
 }
+

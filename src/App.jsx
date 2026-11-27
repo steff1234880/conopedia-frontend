@@ -14,6 +14,7 @@ import MySpaceProfilePage from './components/MySpaceProfilePage';
 import ExamIntroductionPage from './components/ExamIntroductionPage';
 import AssessmentQuestionsPage from './components/AssessmentQuestionsPage';
 import AssessmentResultsPage from './components/AssessmentResultsPage';
+import AssessmentReviewDashboardPage from './components/AssessmentReviewDashboardPage';
 import { demoAuthService } from './services/authService';
 import { getLatestAssessmentResult } from './services/assessmentService';
 
@@ -56,6 +57,14 @@ export default function App() {
       cleanRoute === 'assessment-instructions'
     ) {
       return 'exam-introduction';
+    }
+    if (
+      cleanRoute === 'assessment-review' ||
+      cleanRoute === 'review-answers' ||
+      cleanRoute === 'question-review' ||
+      cleanRoute === 'results-review'
+    ) {
+      return 'assessment-review';
     }
     if (
       cleanRoute === 'assessment-results' ||
@@ -375,6 +384,7 @@ export default function App() {
       {currentRoute === 'assessment-results' && (
         <AssessmentResultsPage
           resultData={latestAssessmentResult}
+          onReviewAnswers={() => navigateTo('assessment-review')}
           onPracticeWeakAreas={(weakQuestions) => {
             const weakContext = {
               title: 'WEAK AREAS PRACTICE',
@@ -406,6 +416,26 @@ export default function App() {
           onNavigateHome={() => navigateTo('dashboard')}
           onNavigateCourses={() => navigateTo('courses')}
           onNavigatePractice={() => navigateTo('practice')}
+          onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onNavigateProfile={() => navigateTo('profile')}
+        />
+      )}
+
+      {/* 9e. Assessment Results & Review Answers Dashboard Page */}
+      {currentRoute === 'assessment-review' && (
+        <AssessmentReviewDashboardPage
+          resultData={latestAssessmentResult}
+          onReturnToAssessments={() =>
+            navigateTo(
+              latestAssessmentResult?.returnRoute === 'readiness-assessments'
+                ? 'readiness-assessments'
+                : latestAssessmentResult?.returnRoute || 'readiness-assessments'
+            )
+          }
+          onNavigateHome={() => navigateTo('dashboard')}
+          onNavigateCourses={() => navigateTo('courses')}
+          onNavigatePractice={() => navigateTo('practice')}
+          onNavigateReadiness={() => navigateTo('readiness-assessments')}
           onNavigateLiveClasses={() => navigateTo('live-classes')}
           onNavigateProfile={() => navigateTo('profile')}
         />
