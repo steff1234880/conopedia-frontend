@@ -366,7 +366,7 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
 
             </div>
 
-            {/* Bottom: Full-width blue Continue button */}
+            {/* Bottom: Full-width blue Done button */}
             <button
               type="submit"
               disabled={isSubmitting}
@@ -381,7 +381,7 @@ export default function SignUpStep1({ initialData, onBack, onContinue }) {
                   <span>Validating...</span>
                 </span>
               ) : (
-                'Continue'
+                'Done'
               )}
             </button>
           </form>

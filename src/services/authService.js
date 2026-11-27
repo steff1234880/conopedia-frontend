@@ -36,6 +36,21 @@ export const demoAuthService = {
     }
   },
 
+  registerUserWithProgram: (formData, program) => {
+    const newUser = {
+      name: formData?.fullName?.trim() || 'Ananya Nair',
+      email: formData?.email?.trim() || 'ananya@example.com',
+      phone: formData?.phone ? `${formData.countryCode || ''} ${formData.phone}`.trim() : '',
+      experience: formData?.experience || '',
+      program: program || 'NCLEX-RN',
+      token: 'demo-token-' + Date.now(),
+    };
+
+    localStorage.setItem('canopedia_demo_user', JSON.stringify(newUser));
+    localStorage.setItem('canopedia_selected_program', newUser.program);
+    return newUser;
+  },
+
   logout: () => {
     localStorage.removeItem('canopedia_demo_user');
   }

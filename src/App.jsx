@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import WelcomePage from './components/WelcomePage';
 import SignUpStep1 from './components/SignUpStep1';
+import SignUpProgramSelection from './components/SignUpProgramSelection';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
 import StudentDashboard from './components/StudentDashboard';
@@ -55,6 +56,9 @@ export default function App() {
     if (cleanHash === 'courses' || cleanHash === 'learn') {
       return 'courses';
     }
+    if (cleanHash === 'signup-program' || cleanHash === 'your-program' || cleanHash === 'select-program') {
+      return 'signup-program';
+    }
     if (['signup', 'login', 'forgot-password', 'dashboard'].includes(cleanHash)) {
       return cleanHash;
     }
@@ -101,6 +105,20 @@ export default function App() {
           onBack={() => navigateTo('welcome')}
           onContinue={(data) => {
             setSignUpFormData(data);
+            navigateTo('signup-program');
+          }}
+        />
+      )}
+
+      {/* 2b. Sign Up Program Selection (Your Program) */}
+      {currentRoute === 'signup-program' && (
+        <SignUpProgramSelection
+          initialProgram={signUpFormData?.program || 'NCLEX-RN'}
+          onBack={() => navigateTo('signup')}
+          onComplete={(selectedProgram) => {
+            const updatedData = { ...(signUpFormData || {}), program: selectedProgram };
+            setSignUpFormData(updatedData);
+            demoAuthService.registerUserWithProgram(updatedData, selectedProgram);
             navigateTo('dashboard');
           }}
         />
