@@ -13,7 +13,9 @@ import ReadinessAssessmentsPage from './components/ReadinessAssessmentsPage';
 import MySpaceProfilePage from './components/MySpaceProfilePage';
 import ExamIntroductionPage from './components/ExamIntroductionPage';
 import AssessmentQuestionsPage from './components/AssessmentQuestionsPage';
+import AssessmentResultsPage from './components/AssessmentResultsPage';
 import { demoAuthService } from './services/authService';
+import { getLatestAssessmentResult } from './services/assessmentService';
 
 /**
  * Canopedia Application Router
@@ -54,6 +56,15 @@ export default function App() {
       cleanRoute === 'assessment-instructions'
     ) {
       return 'exam-introduction';
+    }
+    if (
+      cleanRoute === 'assessment-results' ||
+      cleanRoute === 'exam-results' ||
+      cleanRoute === 'assessment-complete' ||
+      cleanRoute === 'final-results' ||
+      cleanRoute === 'results'
+    ) {
+      return 'assessment-results';
     }
     if (
       cleanRoute === 'assessment-questions' ||
@@ -117,11 +128,14 @@ export default function App() {
   const [activeAssessmentContext, setActiveAssessmentContext] = useState(() => {
     try {
       const saved = sessionStorage.getItem('canopedia_active_assessment');
-      return saved ? JSON.parse(saved) : { title: 'NCLEX-RN Clinical Assessment', returnRoute: 'courses' };
+      return saved ? JSON.parse(saved) : { title: 'RECOGNITION PRACTICE', returnRoute: 'courses' };
     } catch {
-      return { title: 'NCLEX-RN Clinical Assessment', returnRoute: 'courses' };
+      return { title: 'RECOGNITION PRACTICE', returnRoute: 'courses' };
     }
   });
+  const [latestAssessmentResult, setLatestAssessmentResult] = useState(() =>
+    getLatestAssessmentResult()
+  );
   const [signUpFormData, setSignUpFormData] = useState(() => {
     try {
       const saved = sessionStorage.getItem('canopedia_signup_draft');
@@ -142,12 +156,17 @@ export default function App() {
 
   const handleOpenExamIntroduction = (context = {}) => {
     const nextContext = {
-      title: context.title || 'NCLEX-RN Clinical Assessment',
+      title: context.title || 'RECOGNITION PRACTICE',
       returnRoute: context.returnRoute || currentRoute || 'courses',
+      questions: context.questions || null,
+      resetSession: true,
+      sessionId: Date.now(),
     };
     setActiveAssessmentContext(nextContext);
     try {
       sessionStorage.setItem('canopedia_active_assessment', JSON.stringify(nextContext));
+      sessionStorage.removeItem('canopedia_ngn_exam_answers');
+      sessionStorage.removeItem('canopedia_ngn_exam_flags');
     } catch {
       // ignore storage errors
     }
@@ -343,8 +362,52 @@ export default function App() {
         <AssessmentQuestionsPage
           assessmentTitle={activeAssessmentContext?.title || 'NCLEX-RN PRACTICE'}
           assessmentContext={activeAssessmentContext}
+          onSubmitAssessment={(resultRecord) => {
+            setLatestAssessmentResult(resultRecord);
+            navigateTo('assessment-results');
+          }}
           onBackToLesson={() => navigateTo(activeAssessmentContext?.returnRoute || 'courses')}
           onExitToDashboard={() => navigateTo('dashboard')}
+        />
+      )}
+
+      {/* 9d. Assessment Completion / Final Results Page */}
+      {currentRoute === 'assessment-results' && (
+        <AssessmentResultsPage
+          resultData={latestAssessmentResult}
+          onPracticeWeakAreas={(weakQuestions) => {
+            const weakContext = {
+              title: 'WEAK AREAS PRACTICE',
+              returnRoute:
+                latestAssessmentResult?.returnRoute ||
+                activeAssessmentContext?.returnRoute ||
+                'courses',
+              questions: weakQuestions,
+              resetSession: true,
+              sessionId: Date.now(),
+            };
+            setActiveAssessmentContext(weakContext);
+            try {
+              sessionStorage.setItem('canopedia_active_assessment', JSON.stringify(weakContext));
+              sessionStorage.removeItem('canopedia_ngn_exam_answers');
+              sessionStorage.removeItem('canopedia_ngn_exam_flags');
+            } catch {
+              // ignore storage errors
+            }
+            navigateTo('assessment-questions');
+          }}
+          onReturnToLesson={() =>
+            navigateTo(
+              latestAssessmentResult?.returnRoute ||
+                activeAssessmentContext?.returnRoute ||
+                'courses'
+            )
+          }
+          onNavigateHome={() => navigateTo('dashboard')}
+          onNavigateCourses={() => navigateTo('courses')}
+          onNavigatePractice={() => navigateTo('practice')}
+          onNavigateLiveClasses={() => navigateTo('live-classes')}
+          onNavigateProfile={() => navigateTo('profile')}
         />
       )}
 

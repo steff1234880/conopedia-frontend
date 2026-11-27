@@ -28,14 +28,17 @@ import myspaceAvatar from '../assets/myspace-avatar.png';
 import {
   loadAssessmentQuestions,
   evaluateQuestionResponse,
+  buildAndSaveAssessmentResult,
 } from '../services/assessmentService';
 
 const ANSWERS_STORAGE_KEY = 'canopedia_ngn_exam_answers';
 const FLAGS_STORAGE_KEY = 'canopedia_ngn_exam_flags';
+const INITIAL_DURATION_SECONDS = 2100;
 
 export default function AssessmentQuestionsPage({
   assessmentTitle = 'NCLEX-RN PRACTICE',
   assessmentContext = {},
+  onSubmitAssessment,
   onBackToLesson,
   onExitToDashboard,
 }) {
@@ -79,6 +82,18 @@ export default function AssessmentQuestionsPage({
     loadAssessmentQuestions(assessmentContext).then((loaded) => {
       if (mounted) {
         setQuestions(loaded || []);
+        setCurrentIndex(0);
+        if (assessmentContext?.resetSession) {
+          setAnswers({});
+          setFlagged({});
+          setSecondsRemaining(INITIAL_DURATION_SECONDS);
+          try {
+            sessionStorage.removeItem(ANSWERS_STORAGE_KEY);
+            sessionStorage.removeItem(FLAGS_STORAGE_KEY);
+          } catch {
+            // ignore
+          }
+        }
         setIsLoading(false);
       }
     });
@@ -109,7 +124,6 @@ export default function AssessmentQuestionsPage({
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setSubmitted(true);
           return 0;
         }
         return prev - 1;
@@ -117,6 +131,13 @@ export default function AssessmentQuestionsPage({
     }, 1000);
     return () => clearInterval(timer);
   }, [submitted, isLoading]);
+
+  useEffect(() => {
+    if (secondsRemaining === 0 && !submitted && !isLoading && questions.length > 0) {
+      handleFinishExam();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondsRemaining, submitted, isLoading, questions.length]);
 
   const formatTimer = (totalSecs) => {
     const mins = Math.floor(totalSecs / 60);
@@ -192,8 +213,29 @@ export default function AssessmentQuestionsPage({
 
   const handleFinishExam = () => {
     setShowEndExamModal(false);
-    setSubmitted(true);
-    window.scrollTo(0, 0);
+    const elapsedSeconds = Math.max(1, INITIAL_DURATION_SECONDS - secondsRemaining);
+    const savedResult = buildAndSaveAssessmentResult({
+      questions,
+      answers,
+      flagged,
+      elapsedSeconds,
+      assessmentTitle: assessmentContext?.title || assessmentTitle || 'RECOGNITION PRACTICE',
+      returnRoute: assessmentContext?.returnRoute || 'courses',
+    });
+
+    try {
+      sessionStorage.removeItem(ANSWERS_STORAGE_KEY);
+      sessionStorage.removeItem(FLAGS_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    if (onSubmitAssessment) {
+      onSubmitAssessment(savedResult);
+    } else {
+      setSubmitted(true);
+      window.scrollTo(0, 0);
+    }
   };
 
   const handleRetake = () => {

@@ -580,3 +580,339 @@ export function evaluateQuestionResponse(question, response) {
       return { isAnswered: Boolean(response), isCorrect: false };
   }
 }
+
+const LATEST_RESULT_STORAGE_KEY = 'canopedia_latest_assessment_result';
+const RESULTS_HISTORY_STORAGE_KEY = 'canopedia_assessment_results_history';
+
+const TOPIC_TAKEAWAYS = {
+  'matrix-grid': {
+    topicTitle: 'Hemodynamics & Perfusion',
+    referenceTitle: 'Hemodynamics Clinical Reference Note',
+    referenceContent:
+      'In sickle cell vaso-occlusive crisis, distinguish intravascular dehydration (elevated Na⁺ 147 mEq/L, BUN 32 mg/dL, skin tenting, hypotension) from impaired peripheral perfusion (prolonged capillary refill, severe ischemic pain) and impaired gas exchange (SpO₂ < 95%, Hgb 7.1 g/dL).',
+    strengthPhrase: 'classifying pathophysiological perfusion and laboratory cues',
+    revisitPhrase: 'early compensatory hemodynamic and fluid-volume indicators—especially heart-rate and blood-pressure patterns in hypovolemia',
+  },
+  'dosage-calc': {
+    topicTitle: 'Pediatric Dosage Calculation',
+    referenceTitle: 'Weight-Based Pediatric Dosing Reference Note',
+    referenceContent:
+      'Always verify weight in kilograms before computing mg/kg doses, convert total milligrams using available concentration (mg/mL), and apply clinical rounding rules only at the final step.',
+    strengthPhrase: 'safe pediatric weight-based dosage conversions',
+    revisitPhrase: 'multi-step mg/kg liquid volume calculations and half-milliliter rounding checkpoints',
+  },
+  'cloze-dropdown': {
+    topicTitle: 'Acute Chest Syndrome Recognition',
+    referenceTitle: 'Acute Chest Syndrome Clinical Reference Note',
+    referenceContent:
+      'Acute chest syndrome presents with new pulmonary infiltrates, chest pain, tachypnea, and hypoxemia (SpO₂ < 95%). Immediate oxygen titration, incentive spirometry, and close respiratory surveillance prevent rapid decompensation.',
+    strengthPhrase: 'identifying high-risk respiratory complications from bedside cues',
+    revisitPhrase: 'linking acute hypoxemia and dyspnea cues to life-threatening vaso-occlusive complications',
+  },
+  'drag-drop': {
+    topicTitle: 'ABC Priority Plan of Care',
+    referenceTitle: 'NGN Priority Care Planning Reference Note',
+    referenceContent:
+      'Apply the ABC (Airway, Breathing, Circulation) framework: correct hypoxemia first by titrating supplemental O₂ to maintain SpO₂ ≥95%, while concurrently managing severe vaso-occlusive pain and IV hydration.',
+    strengthPhrase: 'sequencing priority oxygenation and pain-management interventions',
+    revisitPhrase: 'prioritizing airway/oxygenation targets ahead of secondary nursing diagnoses',
+  },
+  'incident-report': {
+    topicTitle: 'Clinical Safety & Incident Reporting',
+    referenceTitle: 'Patient Safety & Variance Reporting Reference Note',
+    referenceContent:
+      'File an incident/variance report and intervene immediately for thermal vasoconstriction hazards (ice packs in sickle cell crisis), IV infusion pump rate discrepancies, and unmitigated opioid fall risks.',
+    strengthPhrase: 'detecting bedside safety variances requiring immediate intervention',
+    revisitPhrase: 'high-alert IV pump verification and fall-prevention precautions following opioid administration',
+  },
+  'multiple-response': {
+    topicTitle: 'Vaso-Occlusive Crisis Interventions',
+    referenceTitle: 'Sickle Cell Crisis (HOP Protocol) Reference Note',
+    referenceContent:
+      'Standard vaso-occlusive crisis care follows HOP: Hydration (hypotonic IV fluids to reduce RBC sickling), Oxygenation (keep SpO₂ ≥95% + hourly incentive spirometry), and Pain control (scheduled opioids + warm compresses, never cold).',
+    strengthPhrase: 'selecting evidence-based hydration, oxygenation, and analgesia orders',
+    revisitPhrase: 'contraindicated thermal interventions and therapeutic hypotonic fluid goals',
+  },
+};
+
+export function formatDurationShort(totalSeconds) {
+  const safeSecs = Math.max(1, Math.round(Number(totalSeconds) || 0));
+  const mins = Math.floor(safeSecs / 60);
+  const secs = safeSecs % 60;
+  if (mins === 0) return `${secs}s`;
+  return `${mins}m ${String(secs).padStart(2, '0')}s`;
+}
+
+export function formatCompletedTimestamp(dateObj = new Date()) {
+  try {
+    const datePart = dateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const timePart = dateObj.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return `${datePart} · ${timePart}`;
+  } catch {
+    return 'Completed just now';
+  }
+}
+
+/**
+ * Computes dynamic summary metrics, personalized Learning Takeaway, and weak-area questions
+ * directly from the student's actual submitted answers and elapsed exam duration.
+ */
+export function buildAndSaveAssessmentResult({
+  questions = [],
+  answers = {},
+  flagged = {},
+  elapsedSeconds = 0,
+  assessmentTitle = 'RECOGNITION PRACTICE',
+  returnRoute = 'courses',
+}) {
+  const totalQuestions = questions.length;
+  const itemEvaluations = questions.map((q) => {
+    const evalResult = evaluateQuestionResponse(q, answers[q.id]);
+    return {
+      question: q,
+      userAnswer: answers[q.id],
+      isAnswered: evalResult.isAnswered,
+      isCorrect: evalResult.isCorrect,
+      isFlagged: Boolean(flagged[q.id]),
+    };
+  });
+
+  const completedCount = itemEvaluations.filter((i) => i.isAnswered).length;
+  const correctCount = itemEvaluations.filter((i) => i.isCorrect).length;
+  const reviewItemsCount = Math.max(0, totalQuestions - correctCount);
+
+  const completionRatePercent =
+    totalQuestions > 0 ? Math.round((completedCount / totalQuestions) * 100) : 0;
+  const scorePercent =
+    totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+  const benchmarkPercent = 70;
+  const benchmarkMet = scorePercent >= benchmarkPercent;
+
+  const safeElapsed = Math.max(1, Math.round(Number(elapsedSeconds) || 0));
+  const avgSecondsPerQuestion =
+    totalQuestions > 0 ? Math.max(1, Math.round(safeElapsed / totalQuestions)) : safeElapsed;
+
+  // Build personalized Learning Takeaway based on actual correct vs. missed items
+  const correctItems = itemEvaluations.filter((i) => i.isCorrect);
+  const incorrectItems = itemEvaluations.filter((i) => !i.isCorrect);
+
+  const strongestMeta =
+    (correctItems[0] && TOPIC_TAKEAWAYS[correctItems[0].question.type]) ||
+    TOPIC_TAKEAWAYS['matrix-grid'];
+  const primaryWeakMeta =
+    (incorrectItems[0] && TOPIC_TAKEAWAYS[incorrectItems[0].question.type]) ||
+    strongestMeta;
+
+  let takeawayMessage = '';
+  if (incorrectItems.length === 0 && totalQuestions > 0) {
+    takeawayMessage = `Outstanding clinical judgment—you accurately mastered ${strongestMeta.strengthPhrase} across all ${totalQuestions} assessment items with zero remediation gaps.`;
+  } else if (correctItems.length > 0) {
+    takeawayMessage = `You consistently recognized ${strongestMeta.strengthPhrase}. Revisit ${primaryWeakMeta.revisitPhrase}.`;
+  } else {
+    takeawayMessage = `Focus your remediation on ${primaryWeakMeta.revisitPhrase} before retaking this clinical benchmark.`;
+  }
+
+  const weakQuestionIds = incorrectItems.map((i) => i.question.id);
+  const weakQuestions = incorrectItems.map((i) => i.question);
+
+  const resultRecord = {
+    id: `result-${Date.now()}`,
+    completedAtIso: new Date().toISOString(),
+    completedAtFormatted: formatCompletedTimestamp(new Date()),
+    practiceLabel: (assessmentTitle || 'RECOGNITION PRACTICE').toUpperCase(),
+    returnRoute: returnRoute || 'courses',
+    totalQuestions,
+    completedCount,
+    completionRatePercent,
+    scorePercent,
+    benchmarkPercent,
+    benchmarkMet,
+    correctCount,
+    reviewItemsCount,
+    elapsedSeconds: safeElapsed,
+    timeSpentFormatted: formatDurationShort(safeElapsed),
+    avgTimePerQuestionFormatted: `~${formatDurationShort(avgSecondsPerQuestion)} / question`,
+    takeaway: {
+      badge: 'LEARNING TAKEAWAY',
+      category: 'Clinical Synthesis',
+      message: takeawayMessage,
+      referenceLinkLabel: `View ${primaryWeakMeta.referenceTitle}`,
+      referenceTitle: primaryWeakMeta.referenceTitle,
+      topicTitle: primaryWeakMeta.topicTitle,
+      referenceContent: primaryWeakMeta.referenceContent,
+    },
+    questions,
+    answers,
+    flagged,
+    weakQuestionIds,
+    weakQuestions,
+    itemEvaluations: itemEvaluations.map((e) => ({
+      questionId: e.question.id,
+      isAnswered: e.isAnswered,
+      isCorrect: e.isCorrect,
+      isFlagged: e.isFlagged,
+    })),
+  };
+
+  // Persist locally
+  try {
+    sessionStorage.setItem(LATEST_RESULT_STORAGE_KEY, JSON.stringify(resultRecord));
+    localStorage.setItem(LATEST_RESULT_STORAGE_KEY, JSON.stringify(resultRecord));
+
+    const existingHistoryRaw = localStorage.getItem(RESULTS_HISTORY_STORAGE_KEY);
+    const historyList = existingHistoryRaw ? JSON.parse(existingHistoryRaw) : [];
+    const updatedHistory = [resultRecord, ...(Array.isArray(historyList) ? historyList : [])].slice(
+      0,
+      20
+    );
+    localStorage.setItem(RESULTS_HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+  } catch {
+    // Ignore storage quota errors
+  }
+
+  // Optional non-blocking POST to backend API if VITE_API_BASE_URL is configured
+  const apiBase = import.meta.env?.VITE_API_BASE_URL;
+  if (apiBase) {
+    fetch(`${apiBase.replace(/\/$/, '')}/assessments/results`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assessmentTitle,
+        totalQuestions,
+        completedCount,
+        correctCount,
+        scorePercent,
+        elapsedSeconds: safeElapsed,
+        answers,
+        completedAt: resultRecord.completedAtIso,
+      }),
+    }).catch(() => {});
+  }
+
+  return resultRecord;
+}
+
+export function getLatestAssessmentResult() {
+  try {
+    const fromSession = sessionStorage.getItem(LATEST_RESULT_STORAGE_KEY);
+    if (fromSession) return JSON.parse(fromSession);
+    const fromLocal = localStorage.getItem(LATEST_RESULT_STORAGE_KEY);
+    if (fromLocal) return JSON.parse(fromLocal);
+  } catch {
+    // ignore parse errors
+  }
+  return null;
+}
+
+/**
+ * Formats a human-readable summary of the user's answer vs. the correct answer for Review Answers mode.
+ */
+export function getQuestionReviewDetails(question, response) {
+  if (!question) return { userSummary: 'No answer submitted', correctSummary: '' };
+
+  switch (question.type) {
+    case 'matrix-grid': {
+      const map = response && typeof response === 'object' ? response : {};
+      const colLabels = {};
+      (question.columns || []).forEach((c) => {
+        colLabels[c.id] = c.label;
+      });
+      const rowDetails = (question.rows || []).map((r) => {
+        const picked = (map[r.id] || []).map((id) => colLabels[id] || id);
+        const expected = (r.correctColumns || []).map((id) => colLabels[id] || id);
+        const rowCorrect =
+          picked.length === expected.length &&
+          [...picked].sort().every((v, idx) => v === [...expected].sort()[idx]);
+        return {
+          label: r.finding,
+          userValue: picked.length > 0 ? picked.join(', ') : 'None selected',
+          correctValue: expected.length > 0 ? expected.join(', ') : 'None applicable',
+          isCorrect: rowCorrect,
+        };
+      });
+      return { type: 'rows', rowDetails };
+    }
+
+    case 'dosage-calc': {
+      const rawVal =
+        typeof response === 'object' && response !== null ? response.value : response;
+      const userStr = rawVal ? `${rawVal} ${question.unitSuffix || 'mL'}` : 'Not answered';
+      const correctStr = `${question.correctNumeric} ${question.unitSuffix || 'mL'}`;
+      return {
+        type: 'single',
+        userSummary: userStr,
+        correctSummary: correctStr,
+      };
+    }
+
+    case 'cloze-dropdown': {
+      const map = response && typeof response === 'object' ? response : {};
+      const rowDetails = (question.clauses || []).map((c) => ({
+        label: `${c.prefix} (${c.label})`,
+        userValue: map[c.id] || 'Not selected',
+        correctValue: c.correctAnswer,
+        isCorrect: map[c.id] === c.correctAnswer,
+      }));
+      return { type: 'rows', rowDetails };
+    }
+
+    case 'drag-drop': {
+      const map = response && typeof response === 'object' ? response : {};
+      const bankMap = {};
+      (question.wordBank || []).forEach((w) => {
+        bankMap[w.id] = w.text;
+      });
+      const rowDetails = (question.slots || []).map((s) => {
+        const pickedId = map[s.id];
+        return {
+          label: s.leadText,
+          userValue: pickedId ? bankMap[pickedId] || pickedId : 'Empty slot',
+          correctValue: bankMap[s.correctWordId] || s.correctWordId,
+          isCorrect: pickedId === s.correctWordId,
+        };
+      });
+      return { type: 'rows', rowDetails };
+    }
+
+    case 'incident-report': {
+      const selected = Array.isArray(response) ? response : [];
+      const rowDetails = (question.segments || []).map((seg) => {
+        const wasPicked = selected.includes(seg.id);
+        return {
+          label: seg.text,
+          userValue: wasPicked ? 'Selected' : 'Not selected',
+          correctValue: seg.isRelevant ? 'Requires Incident Follow-up' : 'Routine / Appropriate Care',
+          isCorrect: wasPicked === Boolean(seg.isRelevant),
+        };
+      });
+      return { type: 'rows', rowDetails };
+    }
+
+    case 'multiple-response': {
+      const selected = Array.isArray(response) ? response : [];
+      const rowDetails = (question.options || []).map((opt) => {
+        const wasPicked = selected.includes(opt.id);
+        return {
+          label: opt.text,
+          userValue: wasPicked ? 'Selected' : 'Not selected',
+          correctValue: opt.isCorrect ? 'Correct Intervention' : 'Contraindicated / Incorrect',
+          isCorrect: wasPicked === Boolean(opt.isCorrect),
+        };
+      });
+      return { type: 'rows', rowDetails };
+    }
+
+    default:
+      return { type: 'single', userSummary: 'Submitted', correctSummary: '' };
+  }
+}
+
